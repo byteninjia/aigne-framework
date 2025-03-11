@@ -249,7 +249,7 @@ export class UserAgent<
   O extends AgentOutput = AgentOutput,
 > extends Agent<I, O> {
   constructor(
-    public options: AgentOptions & {
+    public options: AgentOptions<I, O> & {
       run: (input: I) => Promise<O>;
     },
   ) {

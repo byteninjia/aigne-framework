@@ -6,7 +6,7 @@ import {
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { type JsonSchema, jsonSchemaToZod } from "@n8n/json-schema-to-zod";
-import { type ZodObject, z } from "zod";
+import { type ZodObject, type ZodType, z } from "zod";
 import { logger } from "../utils/logger";
 import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent";
 
@@ -78,7 +78,9 @@ export class MCPAgent extends Agent {
         client,
         name: tool.name,
         description: tool.description,
-        inputSchema: jsonSchemaToZod<ZodObject<any>>(tool.inputSchema as JsonSchema),
+        inputSchema: jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(
+          tool.inputSchema as JsonSchema,
+        ),
         outputSchema: z
           .object({
             _meta: z.record(z.unknown()).optional(),

@@ -17,6 +17,8 @@
     "url": "git+https://github.com/blocklet/ai-studio.git"
   },
   "scripts": {
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "build": "tsc --build scripts/tsconfig.build.json",
     "clean": "rimraf lib coverage",
     "prepublishOnly": "run-s clean build",

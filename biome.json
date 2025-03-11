@@ -21,18 +21,11 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": {
-        "noExplicitAny": "warn"
-      },
-      "style": {
-        "noNonNullAssertion": "warn"
-      },
-      "complexity": {
-        "useLiteralKeys": "warn",
-        "noBannedTypes": "warn"
-      },
       "correctness": {
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "error",
+        "noUnusedPrivateClassMembers": "error"
       }
     }
   },

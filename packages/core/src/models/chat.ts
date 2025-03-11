@@ -76,7 +76,7 @@ export type ChatModelInputResponseFormat =
       jsonSchema: {
         name: string;
         description?: string;
-        schema: object;
+        schema: Record<string, unknown>;
         strict?: boolean;
       };
     };

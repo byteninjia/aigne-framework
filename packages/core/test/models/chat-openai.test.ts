@@ -10,7 +10,9 @@ import {
   UserMessageTemplate,
 } from "@aigne/core";
 import type OpenAI from "openai";
-import { OPENAI_API_KEY } from "../env";
+import type { APIPromise } from "openai/core";
+import type { ChatCompletion, ChatCompletionChunk } from "openai/resources";
+import type { Stream } from "openai/streaming";
 
 test("ChatModelOpenAI.run", async () => {
   const model = new ChatModelOpenAI({
@@ -27,7 +29,7 @@ test("ChatModelOpenAI.run", async () => {
         }
         controller.close();
       },
-    }) as any,
+    }) as unknown as APIPromise<Stream<ChatCompletionChunk> | ChatCompletion>,
   );
 
   const result = await model.call({

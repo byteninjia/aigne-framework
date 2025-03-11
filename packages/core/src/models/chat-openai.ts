@@ -66,7 +66,8 @@ export class ChatModelOpenAI extends ChatModel {
             function: { name: "", arguments: {} },
             args: "",
           };
-          const c = toolCalls[call.index]!;
+          const c = toolCalls[call.index];
+          if (!c) throw new Error("Tool call not found");
 
           if (call.type) c.type = call.type;
 
@@ -107,34 +108,37 @@ const ROLE_MAP: { [key in Role]: ChatCompletionMessageParam["role"] } = {
 async function contentsFromInputMessages(
   messages: ChatModelInputMessage[],
 ): Promise<ChatCompletionMessageParam[]> {
-  return messages.map((i) => ({
-    role: ROLE_MAP[i.role] as any,
-    content:
-      typeof i.content === "string"
-        ? i.content
-        : (i.content
-            ?.map((c) => {
-              if (c.type === "text") {
-                return { type: "text" as const, text: c.text };
-              }
-              if (c.type === "image_url") {
-                return {
-                  type: "image_url" as const,
-                  image_url: { url: c.url },
-                };
-              }
-            })
-            .filter(isNonNullable) as any),
-    tool_calls: i.toolCalls?.map((i) => ({
-      ...i,
-      function: {
-        ...i.function,
-        arguments: JSON.stringify(i.function.arguments),
-      },
-    })),
-    tool_call_id: i.toolCallId,
-    name: i.name,
-  }));
+  return messages.map(
+    (i) =>
+      ({
+        role: ROLE_MAP[i.role],
+        content:
+          typeof i.content === "string"
+            ? i.content
+            : i.content
+                ?.map((c) => {
+                  if (c.type === "text") {
+                    return { type: "text" as const, text: c.text };
+                  }
+                  if (c.type === "image_url") {
+                    return {
+                      type: "image_url" as const,
+                      image_url: { url: c.url },
+                    };
+                  }
+                })
+                .filter(isNonNullable),
+        tool_calls: i.toolCalls?.map((i) => ({
+          ...i,
+          function: {
+            ...i.function,
+            arguments: JSON.stringify(i.function.arguments),
+          },
+        })),
+        tool_call_id: i.toolCallId,
+        name: i.name,
+      }) as ChatCompletionMessageParam,
+  );
 }
 
 function toolsFromInputTools(tools?: ChatModelInputTool[]): ChatCompletionTool[] | undefined {
@@ -150,15 +154,18 @@ function toolsFromInputTools(tools?: ChatModelInputTool[]): ChatCompletionTool[]
     : undefined;
 }
 
-function jsonSchemaToOpenAIJsonSchema(schema: any): any {
+function jsonSchemaToOpenAIJsonSchema(schema: Record<string, unknown>): Record<string, unknown> {
   if (schema?.type === "object") {
-    const { required, properties } = schema;
+    const { required, properties } = schema as {
+      required?: string[];
+      properties: Record<string, unknown>;
+    };
 
     return {
       ...schema,
       properties: Object.fromEntries(
-        Object.entries(properties).map(([key, value]: any) => {
-          const valueSchema = jsonSchemaToOpenAIJsonSchema(value);
+        Object.entries(properties).map(([key, value]) => {
+          const valueSchema = jsonSchemaToOpenAIJsonSchema(value as Record<string, unknown>);
 
           // NOTE: All fields must be required https://platform.openai.com/docs/guides/structured-outputs/all-fields-must-be-required
           return [
@@ -172,9 +179,11 @@ function jsonSchemaToOpenAIJsonSchema(schema: any): any {
   }
 
   if (schema?.type === "array") {
+    const { items } = schema as { items: Record<string, unknown> };
+
     return {
       ...schema,
-      items: jsonSchemaToOpenAIJsonSchema(schema.items),
+      items: jsonSchemaToOpenAIJsonSchema(items),
     };
   }
 

@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import { type ZodObject, z } from "zod";
+import { type ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context";
 import { userInput } from "../prompt/prompt-builder";
 import { logger } from "../utils/logger";
@@ -17,7 +17,7 @@ export type PublishTopic<O extends AgentOutput = AgentOutput> =
   | ((output: O) => string | string[] | Promise<string | string[]>);
 
 export interface AgentOptions<
-  _I extends AgentInput = AgentInput,
+  I extends AgentInput = AgentInput,
   O extends AgentOutput = AgentOutput,
 > {
   subscribeTopic?: SubscribeTopic;
@@ -28,9 +28,9 @@ export interface AgentOptions<
 
   description?: string;
 
-  inputSchema?: ZodObject<any>;
+  inputSchema?: ZodObject<{ [key in keyof I]: ZodType }>;
 
-  outputSchema?: ZodObject<any>;
+  outputSchema?: ZodObject<{ [key in keyof O]: ZodType }>;
 
   includeInputInOutput?: boolean;
 
@@ -52,11 +52,13 @@ export class Agent<
 
     this.name = options.name || this.constructor.name;
     this.description = options.description;
-    this.inputSchema = options.inputSchema || z.object({});
-    this.outputSchema = options.outputSchema || z.object({});
+    this.inputSchema =
+      options.inputSchema || (z.object({}) as ZodObject<{ [key in keyof I]: ZodType }>);
+    this.outputSchema =
+      options.outputSchema || (z.object({}) as ZodObject<{ [key in keyof O]: ZodType }>);
     this.includeInputInOutput = options.includeInputInOutput;
     this.subscribeTopic = options.subscribeTopic;
-    this.publishTopic = options.publishTopic;
+    this.publishTopic = options.publishTopic as PublishTopic<AgentOutput>;
     if (options.tools?.length) this.tools.push(...options.tools.map(functionToAgent));
   }
 
@@ -64,17 +66,17 @@ export class Agent<
 
   readonly description?: string;
 
-  readonly inputSchema: ZodObject<any>;
+  readonly inputSchema: ZodObject<{ [key in keyof I]: ZodType }>;
 
-  readonly outputSchema: ZodObject<any>;
+  readonly outputSchema: ZodObject<{ [key in keyof O]: ZodType }>;
 
   readonly includeInputInOutput?: boolean;
 
   readonly subscribeTopic?: SubscribeTopic;
 
-  readonly publishTopic?: PublishTopic<any>;
+  readonly publishTopic?: PublishTopic<AgentOutput>;
 
-  readonly tools = new Proxy<Agent[] & { [key: string]: Agent }>([] as any, {
+  readonly tools = new Proxy([] as unknown as Agent[] & { [key: string]: Agent }, {
     get: (t, p, r) => Reflect.get(t, p, r) ?? t.find((t) => t.name === p),
   });
 
