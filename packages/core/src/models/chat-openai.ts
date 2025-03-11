@@ -14,7 +14,7 @@ import {
 const CHAT_MODEL_OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
 export class ChatModelOpenAI extends ChatModel {
-  constructor(public config?: { apiKey: string; model: string }) {
+  constructor(public config?: { apiKey?: string; model?: string }) {
     super();
   }
 

@@ -1,0 +1,93 @@
+# Puppeteer MCP Server Demo
+
+This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) and [Puppeteer MCP Server](https://github.com/modelcontextprotocol/servers/tree/8bd41eb0b3cf48aea0d1fe5b6c7029736092dcb1/src/puppeteer) to extract content from websites using Puppeteer.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org) and npm installed on your machine.
+- An [OpenAI API key](https://openai.com).
+- [Pnpm](https://pnpm.io) - if you want to run the example from source code.
+
+## Try without Installation
+
+```bash
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY # setup your OpenAI API key
+
+npx -y @aigne/example-puppeteer-mcp-server # run the example
+```
+
+## Installation
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/AIGNE-io/aigne-framework
+```
+
+### Install Dependencies
+
+```bash
+cd aigne-framework/examples/puppeteer-mcp-server
+
+pnpm install
+```
+
+### Setup Environment Variables
+
+Setup your OpenAI API key in the `.env` file:
+
+```bash
+OPENAI_API_KEY="" # YOUR_OPENAI_API_KEY
+```
+
+### Run the Example
+
+```bash
+pnpm start
+```
+
+## Example
+
+The following example demonstrates how to extract content from a website:
+
+```typescript
+import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core";
+
+const model = new ChatModelOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const puppeteerMCPAgent = await MCPAgent.from({
+  command: "npx",
+  args: ["-y", "@modelcontextprotocol/server-puppeteer"],
+});
+
+const engine = new ExecutionEngine({
+  model,
+  tools: [puppeteerMCPAgent],
+});
+
+const agent = AIAgent.from({
+  instructions: `\
+## Steps to extract content from a website
+1. navigate to the url
+2. evaluate document.body.innerText to get the content
+`,
+});
+
+const result = await engine.run("extract content from https://www.arcblock.io", agent);
+
+console.log(result);
+```
+
+Run the example will output the extracted content from the ArcBlock website:
+
+```json
+{
+  text: "Here is the extracted content from the ArcBlock website:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ...",
+}
+```
+
+## License
+
+This project is licensed under the MIT License.

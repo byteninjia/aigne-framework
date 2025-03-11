@@ -163,6 +163,10 @@ classDiagram
     }
 ```
 
+## Examples
+
+- [Puppeteer MCP Server](./examples/puppeteer-mcp-server) - Example project demonstrating how to use AIGNE Framework with Puppeteer MCP Server to scrape web page.
+
 ## Usage
 
 ```ts
@@ -209,7 +213,7 @@ const response = await userAgent.run("transfer to agent b");
 
 ## Packages
 
-- [examples/agents](./examples/agents) - Example project demonstrating how to use different agents to handle various tasks.
+- [examples](./examples) - Example project demonstrating how to use different agents to handle various tasks.
 - [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
 
 ## Key Features
