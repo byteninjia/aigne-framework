@@ -7,9 +7,12 @@ import path, { join } from "node:path";
 
 import { fs, $, chalk } from "zx";
 
-execSync("bumpp --no-tag --no-commit --no-push package.json packages/*/package.json", {
-  stdio: "inherit",
-});
+execSync(
+  "bumpp --no-tag --no-commit --no-push package.json packages/*/package.json examples/*/package.json",
+  {
+    stdio: "inherit",
+  },
+);
 
 const { version } = await fs.readJSON("package.json");
 fs.writeFileSync("version", version);
