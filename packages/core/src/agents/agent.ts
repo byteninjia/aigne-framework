@@ -35,8 +35,6 @@ export interface AgentOptions<
   includeInputInOutput?: boolean;
 
   tools?: (Agent | FunctionAgentFn)[];
-
-  skills?: (Agent | FunctionAgentFn)[];
 }
 
 export class Agent<
@@ -60,35 +58,28 @@ export class Agent<
     this.subscribeTopic = options.subscribeTopic;
     this.publishTopic = options.publishTopic;
     if (options.tools?.length) this.tools.push(...options.tools.map(functionToAgent));
-    if (options.skills?.length) this.skills.push(...options.skills.map(functionToAgent));
   }
 
-  name: string;
+  readonly name: string;
 
-  description?: string;
+  readonly description?: string;
 
-  inputSchema: ZodObject<any>;
+  readonly inputSchema: ZodObject<any>;
 
-  outputSchema: ZodObject<any>;
+  readonly outputSchema: ZodObject<any>;
 
-  includeInputInOutput?: boolean;
+  readonly includeInputInOutput?: boolean;
 
-  subscribeTopic?: SubscribeTopic;
+  readonly subscribeTopic?: SubscribeTopic;
 
-  publishTopic?: PublishTopic<any>;
+  readonly publishTopic?: PublishTopic<any>;
 
-  readonly tools: Agent[] = [];
-
-  readonly skills = new Proxy<{ [key: string]: Agent } & Array<Agent>>([] as any, {
-    get: (target, p, receiver) => {
-      return Reflect.get(target, p, receiver) ?? target.find((i) => i.name === p);
-    },
+  readonly tools = new Proxy<Agent[] & { [key: string]: Agent }>([] as any, {
+    get: (t, p, r) => Reflect.get(t, p, r) ?? t.find((t) => t.name === p),
   });
 
-  addSkill<I extends AgentInput, O extends AgentOutput>(
-    skill: Agent<I, O> | FunctionAgentFn<I, O>,
-  ) {
-    this.skills.push(typeof skill === "function" ? functionToAgent(skill) : skill);
+  addTool<I extends AgentInput, O extends AgentOutput>(tool: Agent<I, O> | FunctionAgentFn<I, O>) {
+    this.tools.push(typeof tool === "function" ? functionToAgent(tool) : tool);
   }
 
   get isCallable(): boolean {

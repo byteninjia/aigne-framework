@@ -29,9 +29,9 @@ test(
         "list_allowed_directories",
       ];
 
-      expect(filesystem.skills.map((i) => i.name)).toEqual(tools);
+      expect(filesystem.tools.map((i) => i.name)).toEqual(tools);
 
-      const listAllowedDirectories = await filesystem.skills.list_allowed_directories?.call({});
+      const listAllowedDirectories = await filesystem.tools.list_allowed_directories?.call({});
       expect(listAllowedDirectories).toEqual({
         content: [
           {
@@ -41,7 +41,7 @@ test(
         ],
       });
 
-      const writeResult = await filesystem.skills.write_file?.call({
+      const writeResult = await filesystem.tools.write_file?.call({
         path: join(dir, "/foo.txt"),
         content: "Hello, AIGNE!",
       });
@@ -54,7 +54,7 @@ test(
         ],
       });
 
-      const readResult = await filesystem.skills.read_file?.call({
+      const readResult = await filesystem.tools.read_file?.call({
         path: join(dir, "/foo.txt"),
       });
       expect(readResult).toEqual({

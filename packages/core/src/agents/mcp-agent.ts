@@ -59,7 +59,7 @@ export class MCPAgent extends Agent {
     await client.connect(transport);
     const { tools: mcpTools } = await client.listTools();
 
-    const skills = mcpTools.map((tool) => {
+    const tools = mcpTools.map((tool) => {
       return new MCPTool({
         client,
         name: tool.name,
@@ -75,7 +75,7 @@ export class MCPAgent extends Agent {
       });
     });
 
-    return new MCPAgent({ client, skills });
+    return new MCPAgent({ client, tools });
   }
 
   constructor(options: MCPAgentOptions) {

@@ -57,7 +57,6 @@ classDiagram
         +List~string~ inputTopic
         +List~string~ nextTopic
         +List~Agent~ tools
-        +Map~string, Agent~ skills
 
         +call(string input, Context context) object
         +call(object input, Context context) object
@@ -212,8 +211,6 @@ const response = await userAgent.run("transfer to agent b");
 
 - [examples/agents](./examples/agents) - Example project demonstrating how to use different agents to handle various tasks.
 - [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
-- [packages/memory](./packages/memory) - Memory package providing memory storage capabilities for AIGNE applications.
-- [packages/runtime](./packages/runtime) - Runtime package providing runtime capabilities for AIGNE applications.
 
 ## Key Features
 

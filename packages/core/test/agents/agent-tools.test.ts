@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Agent, FunctionAgent } from "@aigne/core";
 
-test("Agent.skills", async () => {
+test("Agent.tools", async () => {
   const greeting = FunctionAgent.from({
     name: "greeting",
     fn: ({ name }: { name: string }) => ({
@@ -17,26 +17,26 @@ test("Agent.skills", async () => {
   });
 
   const agent = Agent.from({
-    skills: [greeting, bye],
+    tools: [greeting, bye],
   });
 
-  expect(await agent.skills.greeting?.call({ name: "Alice" })).toEqual({
+  expect(await agent.tools.greeting?.call({ name: "Alice" })).toEqual({
     greeting: "Hello, Alice!",
   });
 
-  expect(await agent.skills.bye?.call({ name: "Alice" })).toEqual({
+  expect(await agent.tools.bye?.call({ name: "Alice" })).toEqual({
     greeting: "Bye, Alice!",
   });
 
-  expect(agent.skills.undefined).toBeUndefined();
+  expect(agent.tools.undefined).toBeUndefined();
 
-  agent.addSkill(function echo(input: { name: string }) {
+  agent.addTool(function echo(input: { name: string }) {
     return input;
   });
 
-  expect(agent.skills.length).toBe(3);
+  expect(agent.tools.length).toBe(3);
 
-  expect(await agent.skills.echo?.call({ name: "Alice" })).toEqual({
+  expect(await agent.tools.echo?.call({ name: "Alice" })).toEqual({
     name: "Alice",
   });
 });
