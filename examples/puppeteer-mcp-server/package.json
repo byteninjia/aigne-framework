@@ -6,7 +6,7 @@
   "license": "ISC",
   "main": "index.js",
   "bin": "index.ts",
-  "files": [".env", "index.ts", "README.md"],
+  "files": [".env", ".env.local.example", "index.ts", "README.md"],
   "scripts": {
     "start": "npx -y bun run index.ts"
   },

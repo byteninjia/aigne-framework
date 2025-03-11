@@ -34,10 +34,10 @@ pnpm install
 
 ### Setup Environment Variables
 
-Setup your OpenAI API key in the `.env` file:
+Setup your OpenAI API key in the `.env.local` file:
 
 ```bash
-OPENAI_API_KEY="" # YOUR_OPENAI_API_KEY
+OPENAI_API_KEY="" # setup your OpenAI API key here
 ```
 
 ### Run the Example
