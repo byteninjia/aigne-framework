@@ -1,0 +1,14 @@
+{
+  "name": "@aigne-examples/agents",
+  "version": "1.0.12-beta.28",
+  "description": "A collection of example agents demonstrating the capabilities of the Aigne framework.",
+  "private": true,
+  "main": "index.js",
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aigne/core": "workspace:^",
+    "zod": "^3.24.2"
+  }
+}
