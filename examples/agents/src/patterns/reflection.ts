@@ -16,9 +16,6 @@ const model = new ChatModelOpenAI({
 const coder = AIAgent.from({
   subscribeTopic: [UserInputTopic, "rewrite_request"],
   publishTopic: "review_request",
-  // TODO:
-  // 1. PromptBuilder.fromFile
-  // 2. PromptBuilder.fromString
   instructions: `\
 You are a proficient coder. You write code to solve problems.
 Work with the reviewer to improve your code.

@@ -12,8 +12,11 @@ export interface AIAgentOptions<
   O extends AgentOutput = AgentOutput,
 > extends AgentOptions<I, O> {
   model?: ChatModel;
-  instructions?: string;
+
+  instructions?: string | PromptBuilder;
+
   outputKey?: string;
+
   toolChoice?: AIAgentToolChoice;
 }
 
@@ -33,16 +36,17 @@ export class AIAgent<
     super(options);
 
     this.model = options.model;
-    this.instructions = options.instructions;
+    this.instructions =
+      typeof options.instructions === "string"
+        ? PromptBuilder.from(options.instructions)
+        : (options.instructions ?? new PromptBuilder());
     this.outputKey = options.outputKey;
     this.toolChoice = options.toolChoice;
   }
 
   model?: ChatModel;
 
-  promptBuilder: PromptBuilder = new PromptBuilder();
-
-  instructions?: string;
+  instructions: PromptBuilder;
 
   outputKey?: string;
 
@@ -54,14 +58,14 @@ export class AIAgent<
 
     let transferOutput: TransferAgentOutput | undefined;
 
-    const { toolAgents, ...modelInput } = await this.promptBuilder.build({
+    const { toolAgents, ...modelInput } = await this.instructions.build({
       agent: this,
       input,
       model,
       context,
     });
 
-    const toolsMap = new Map<string, Agent>(toolAgents.map((i) => [i.name, i]));
+    const toolsMap = new Map<string, Agent>(toolAgents?.map((i) => [i.name, i]));
 
     for (;;) {
       const { text, json, toolCalls } = await model.call(modelInput, context);

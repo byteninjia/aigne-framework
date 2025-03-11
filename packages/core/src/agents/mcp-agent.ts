@@ -86,8 +86,8 @@ export class MCPAgent extends Agent {
 
   private client: Client;
 
-  override async destroy() {
-    super.destroy();
+  override async shutdown() {
+    super.shutdown();
     await this.client.close();
   }
 }

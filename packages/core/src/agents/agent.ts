@@ -122,7 +122,7 @@ export class Agent<
 
   process?(input: I, context?: Context): Promise<O>;
 
-  async destroy() {}
+  async shutdown() {}
 }
 
 export interface FunctionAgentOptions<

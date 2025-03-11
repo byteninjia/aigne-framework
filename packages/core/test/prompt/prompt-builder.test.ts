@@ -1,16 +1,15 @@
 import { expect, test } from "bun:test";
-import { FunctionAgent, PromptTemplate } from "@aigne/core";
-import { ZodObject, z } from "zod";
-import type { AgentInput } from "../../src/agents/agent";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { FunctionAgent } from "@aigne/core";
+import { z } from "zod";
 import { AIAgent } from "../../src/agents/ai-agent";
-import type { ChatModelInputMessage } from "../../src/models/chat";
 import {
   PromptBuilder,
   USER_INPUT_MESSAGE_KEY,
   addMessagesToInput,
   userInput,
 } from "../../src/prompt/prompt-builder";
-import { DEFAULT_INSTRUCTIONS_TEMPLATE } from "../../src/prompt/templates/instructions";
 
 test("userInput function should return correct object", () => {
   const message = "Hello";
@@ -19,31 +18,31 @@ test("userInput function should return correct object", () => {
 });
 
 test("addMessagesToInput function should add messages correctly", () => {
-  const result = addMessagesToInput({ [USER_INPUT_MESSAGE_KEY]: "Hello" }, [
+  const input = addMessagesToInput({ [USER_INPUT_MESSAGE_KEY]: "Hello" }, [
     { role: "user", content: "How are you?" },
   ]);
-  expect(result).toEqual({
+  expect(input).toEqual({
     [USER_INPUT_MESSAGE_KEY]: [
       { role: "user", content: "Hello" },
       { role: "user", content: "How are you?" },
     ],
   });
 
-  const result1 = addMessagesToInput(
+  const input1 = addMessagesToInput(
     { [USER_INPUT_MESSAGE_KEY]: [{ role: "user", content: "Hello" }] },
     [{ role: "agent", content: "How can I help you?" }],
   );
-  expect(result1).toEqual({
+  expect(input1).toEqual({
     [USER_INPUT_MESSAGE_KEY]: [
       { role: "user", content: "Hello" },
       { role: "agent", content: "How can I help you?" },
     ],
   });
 
-  const result2 = addMessagesToInput({ [USER_INPUT_MESSAGE_KEY]: { name: "foo" } }, [
+  const input2 = addMessagesToInput({ [USER_INPUT_MESSAGE_KEY]: { name: "foo" } }, [
     { role: "agent", content: "How can I help you?" },
   ]);
-  expect(result2).toEqual({
+  expect(input2).toEqual({
     [USER_INPUT_MESSAGE_KEY]: [
       { role: "user", content: '{"name":"foo"}' },
       { role: "agent", content: "How can I help you?" },
@@ -57,17 +56,12 @@ test("PromptBuilder should build messages correctly", async () => {
     instructions: "Test instructions",
   });
 
-  const promptBuilder = new PromptBuilder();
-
-  const prompt1 = await promptBuilder.build({ input: userInput("Hello"), agent });
+  const prompt1 = await agent.instructions.build({ input: userInput("Hello"), agent });
 
   expect(prompt1.messages).toEqual([
     {
       role: "system",
-      content: PromptTemplate.from(DEFAULT_INSTRUCTIONS_TEMPLATE).format({
-        name: "TestAgent",
-        instructions: "Test instructions",
-      }),
+      content: "Test instructions",
     },
     {
       role: "user",
@@ -75,14 +69,11 @@ test("PromptBuilder should build messages correctly", async () => {
     },
   ]);
 
-  const prompt2 = await promptBuilder.build({ input: userInput({ name: "foo" }), agent });
+  const prompt2 = await agent.instructions.build({ input: userInput({ name: "foo" }), agent });
   expect(prompt2.messages).toEqual([
     {
       role: "system",
-      content: PromptTemplate.from(DEFAULT_INSTRUCTIONS_TEMPLATE).format({
-        name: "TestAgent",
-        instructions: "Test instructions",
-      }),
+      content: "Test instructions",
     },
     {
       role: "user",
@@ -101,9 +92,7 @@ test("PromptBuilder should build response format correctly", async () => {
     }),
   });
 
-  const promptBuilder = new PromptBuilder();
-
-  const prompt = await promptBuilder.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent });
 
   expect(prompt.responseFormat).toEqual({
     type: "json_schema",
@@ -141,9 +130,7 @@ test("PromptBuilder should build tools correctly", async () => {
     toolChoice: tool,
   });
 
-  const promptBuilder = new PromptBuilder();
-
-  const prompt = await promptBuilder.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent });
 
   expect(prompt.tools).toEqual([
     {
@@ -187,9 +174,25 @@ test("PromptBuilder should build toolChoice correctly", async () => {
     toolChoice: "router",
   });
 
-  const promptBuilder = new PromptBuilder();
-
-  const prompt = await promptBuilder.build({ input: {}, agent });
+  const prompt = await agent.instructions.build({ input: {}, agent });
 
   expect(prompt.toolChoice).toEqual("required");
+});
+
+test("PromptBuilder from file", async () => {
+  const path = join(import.meta.dirname, "test-prompt.txt");
+  const content = await readFile(path, "utf-8");
+
+  const builder = await PromptBuilder.from({ path });
+
+  const prompt = await builder.build({ input: { agentName: "Alice" } });
+
+  expect(prompt).toEqual({
+    messages: [
+      {
+        role: "system",
+        content: content.replace("{{agentName}}", "Alice"),
+      },
+    ],
+  });
 });

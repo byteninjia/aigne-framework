@@ -30,6 +30,9 @@
       "complexity": {
         "useLiteralKeys": "warn",
         "noBannedTypes": "warn"
+      },
+      "correctness": {
+        "noUnusedVariables": "error"
       }
     }
   },

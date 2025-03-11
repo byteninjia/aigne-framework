@@ -26,7 +26,7 @@ const engine = new ExecutionEngine({
 
 const result = await engine.run("extract content from https://www.arcblock.io", agent);
 
-await engine.destroy();
+await engine.shutdown();
 
 console.log(result);
 process.exit(0);

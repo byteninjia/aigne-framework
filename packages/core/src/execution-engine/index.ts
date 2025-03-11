@@ -234,12 +234,12 @@ export class ExecutionEngine extends EventEmitter implements Context {
     };
   }
 
-  async destroy() {
+  async shutdown() {
     for (const tool of this.tools) {
-      await tool.destroy();
+      await tool.shutdown();
     }
     for (const agent of this.agents) {
-      await agent.destroy();
+      await agent.shutdown();
     }
   }
 }

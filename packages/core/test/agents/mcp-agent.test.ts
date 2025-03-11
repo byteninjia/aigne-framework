@@ -66,7 +66,7 @@ test(
         ],
       });
     } finally {
-      await filesystem.destroy();
+      await filesystem.shutdown();
       await rm(dir, { recursive: true, force: true });
     }
   },

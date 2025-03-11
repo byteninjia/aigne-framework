@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { ZodObject, type ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { Agent, type AgentInput } from "../agents/agent";
@@ -13,20 +14,21 @@ import type {
 } from "../models/chat";
 import {
   ChatMessagesTemplate,
-  PromptTemplate,
   SystemMessageTemplate,
   UserMessageTemplate,
   parseChatMessages,
 } from "./template";
-import { DEFAULT_INSTRUCTIONS_TEMPLATE } from "./templates/instructions";
 
 export const USER_INPUT_MESSAGE_KEY = "$user_input_message";
 
-export function userInput(message: string | object) {
+export function userInput(message: string | object): AgentInput {
   return { [USER_INPUT_MESSAGE_KEY]: message };
 }
 
-export function addMessagesToInput(input: AgentInput, messages: ChatModelInputMessage[]) {
+export function addMessagesToInput(
+  input: AgentInput,
+  messages: ChatModelInputMessage[],
+): AgentInput {
   const originalUserInputMessages = input[USER_INPUT_MESSAGE_KEY];
 
   const newMessages: ChatModelInputMessage[] = [];
@@ -48,17 +50,43 @@ export function addMessagesToInput(input: AgentInput, messages: ChatModelInputMe
   return { ...input, [USER_INPUT_MESSAGE_KEY]: newMessages };
 }
 
+export interface PromptBuilderOptions {
+  instructions?: string;
+}
+
 export interface PromptBuilderBuildOptions {
   context?: Context;
-  agent: AIAgent;
-  input: AgentInput;
+  agent?: AIAgent;
+  input?: AgentInput;
   model?: ChatModel;
 }
 
 export class PromptBuilder {
+  static from(instructions: string): PromptBuilder;
+  static from(instructions: { path: string }): Promise<PromptBuilder>;
+  static from(instructions: string | { path: string }): PromptBuilder | Promise<PromptBuilder>;
+  static from(instructions: string | { path: string }): PromptBuilder | Promise<PromptBuilder> {
+    if (typeof instructions === "string") {
+      return new PromptBuilder({ instructions });
+    }
+
+    return PromptBuilder.fromFile(instructions.path);
+  }
+
+  private static async fromFile(path: string): Promise<PromptBuilder> {
+    const text = await readFile(path, "utf-8");
+    return PromptBuilder.from(text);
+  }
+
+  constructor(options?: PromptBuilderOptions) {
+    this.instructions = options?.instructions;
+  }
+
+  instructions?: string;
+
   async build(
     options: PromptBuilderBuildOptions,
-  ): Promise<ChatModelInput & { toolAgents: Agent[] }> {
+  ): Promise<ChatModelInput & { toolAgents?: Agent[] }> {
     return {
       messages: this.buildMessages(options),
       responseFormat: this.buildResponseFormat(options),
@@ -67,20 +95,13 @@ export class PromptBuilder {
   }
 
   private buildMessages(options: PromptBuilderBuildOptions): ChatModelInputMessage[] {
-    const { agent, input } = options;
+    const { input } = options;
 
     const template = ChatMessagesTemplate.from([]);
 
-    template.messages.push(
-      SystemMessageTemplate.from(
-        PromptTemplate.from(DEFAULT_INSTRUCTIONS_TEMPLATE).format({
-          name: agent.name,
-          instructions: agent.instructions,
-        }),
-      ),
-    );
+    if (this.instructions) template.messages.push(SystemMessageTemplate.from(this.instructions));
 
-    const userInputMessage = input[USER_INPUT_MESSAGE_KEY];
+    const userInputMessage = input?.[USER_INPUT_MESSAGE_KEY];
     if (typeof userInputMessage === "string") {
       template.messages.push(UserMessageTemplate.from(userInputMessage));
     } else if (userInputMessage) {
@@ -96,7 +117,8 @@ export class PromptBuilder {
   private buildResponseFormat(
     options: PromptBuilderBuildOptions,
   ): ChatModelInputResponseFormat | undefined {
-    const { outputSchema } = options.agent;
+    const outputSchema = options.agent?.outputSchema;
+    if (!outputSchema) return undefined;
 
     const isJsonOutput = !isEmptyObjectType(outputSchema);
     return isJsonOutput
@@ -113,8 +135,8 @@ export class PromptBuilder {
 
   private buildTools(
     options: PromptBuilderBuildOptions,
-  ): Pick<ChatModelInput, "tools" | "toolChoice"> & { toolAgents: Agent[] } {
-    const toolAgents = options.agent.tools
+  ): Pick<ChatModelInput, "tools" | "toolChoice"> & { toolAgents?: Agent[] } {
+    const toolAgents = (options.agent?.tools ?? [])
       .concat(options.context?.tools ?? [])
       // TODO: support nested tools in the agent skills?
       .flatMap((i) => (i.isCallable ? i.skills.concat(i) : i.skills));
@@ -131,7 +153,7 @@ export class PromptBuilder {
     let toolChoice: ChatModelInputToolChoice | undefined;
 
     // use manual choice if configured in the agent
-    const { toolChoice: manualChoice } = options.agent;
+    const manualChoice = options.agent?.toolChoice;
     if (manualChoice) {
       if (manualChoice instanceof Agent) {
         toolChoice = {
@@ -153,8 +175,8 @@ export class PromptBuilder {
     }
 
     return {
-      toolAgents,
-      tools,
+      toolAgents: toolAgents.length ? toolAgents : undefined,
+      tools: tools.length ? tools : undefined,
       toolChoice,
     };
   }
