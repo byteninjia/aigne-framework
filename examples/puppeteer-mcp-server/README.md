@@ -84,7 +84,7 @@ Run the example will output the extracted content from the ArcBlock website:
 
 ```json
 {
-  text: "Here is the extracted content from the ArcBlock website:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ...",
+  "text": "Here is the extracted content from the ArcBlock website:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ...",
 }
 ```
 
