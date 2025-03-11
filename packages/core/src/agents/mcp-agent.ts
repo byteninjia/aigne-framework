@@ -7,10 +7,13 @@ import {
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { type JsonSchema, jsonSchemaToZod } from "@n8n/json-schema-to-zod";
 import { type ZodObject, z } from "zod";
+import { logger } from "../utils/logger";
 import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent";
 
 const MCP_AGENT_CLIENT_NAME = "MCPAgent";
 const MCP_AGENT_CLIENT_VERSION = "0.0.1";
+
+const debug = logger.base.extend("mcp-agent:debug", "/");
 
 export interface MCPAgentOptions extends AgentOptions {
   client: Client;
@@ -56,8 +59,19 @@ export class MCPAgent extends Agent {
       name: MCP_AGENT_CLIENT_NAME,
       version: MCP_AGENT_CLIENT_VERSION,
     });
+
+    debug(`Connecting to MCP server with transport ${transport.constructor.name}`);
     await client.connect(transport);
+    debug(`Connected to MCP server with transport ${transport.constructor.name}`);
+
+    const mcpServer = getMCPServerName(client);
+
+    debug(`Listing tools from ${mcpServer}`);
     const { tools: mcpTools } = await client.listTools();
+    debug(
+      `Listed tools from ${mcpServer}`,
+      mcpTools.map((i) => i.name),
+    );
 
     const tools = mcpTools.map((tool) => {
       return new MCPTool({
@@ -104,7 +118,25 @@ export class MCPTool extends Agent {
 
   private client: Client;
 
-  async process(input: AgentInput): Promise<AgentOutput> {
-    return await this.client.callTool({ name: this.name, arguments: input });
+  private get mcpServer() {
+    return getMCPServerName(this.client);
   }
+
+  async process(input: AgentInput): Promise<AgentOutput> {
+    debug(`Start call tool ${this.name} from ${this.mcpServer} with input`, input);
+
+    const result = await this.client.callTool({ name: this.name, arguments: input });
+
+    debug(`End call tool ${this.name} from ${this.mcpServer} with result`, result);
+
+    return result;
+  }
+}
+
+function getMCPServerName(client: Client): string | undefined {
+  const info = client.getServerVersion();
+  if (!info) return undefined;
+
+  const { name, version } = info;
+  return `${name}@${version}`;
 }

@@ -93,7 +93,7 @@ export class Agent<
 
     const parsedInput = this.inputSchema.passthrough().parse(_input) as I;
 
-    logger.debug(`Agent ${this.name} (${this.constructor.name}) start`, parsedInput);
+    logger.debug(`Call agent ${this.name} start`, parsedInput);
 
     const output = await this.process(parsedInput, context);
 
@@ -103,9 +103,11 @@ export class Agent<
       ? { ...parsedInput, ...parsedOutput }
       : parsedOutput;
 
-    logger.debug(`Agent ${this.name} (${this.constructor.name}) end`, {
+    logger.debug(`Call agent ${this.name} successfully`, {
       ...finalOutput,
-      [transferAgentOutputKey]: finalOutput[transferAgentOutputKey]?.agent?.name,
+      ...(finalOutput[transferAgentOutputKey]
+        ? { [transferAgentOutputKey]: finalOutput[transferAgentOutputKey].agent.name }
+        : {}),
     });
 
     return finalOutput;
