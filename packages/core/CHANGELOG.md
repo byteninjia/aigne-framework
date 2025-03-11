@@ -1,3 +1,7 @@
+## 1.1.0-beta.4 (2025-3-12)
+
+- feat: support run puppeteer example chat loop in terminal
+
 ## 1.1.0-beta.3 (2025-3-11)
 
 - chore: set module type for core package

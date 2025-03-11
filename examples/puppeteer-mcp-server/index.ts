@@ -1,19 +1,25 @@
 #!/usr/bin/env npx -y bun
 
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core";
+import {
+  AIAgent,
+  ChatModelOpenAI,
+  ExecutionEngine,
+  MCPAgent,
+  runChatLoopInTerminal,
+} from "@aigne/core";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const puppeteerMCPAgent = await MCPAgent.from({
+const puppeteer = await MCPAgent.from({
   command: "npx",
   args: ["-y", "@modelcontextprotocol/server-puppeteer"],
 });
 
 const engine = new ExecutionEngine({
   model,
-  tools: [puppeteerMCPAgent],
+  tools: [puppeteer],
 });
 
 const agent = AIAgent.from({
@@ -24,10 +30,11 @@ const agent = AIAgent.from({
 `,
 });
 
-const result = await engine.run("extract content from https://www.arcblock.io", agent);
+const userAgent = await engine.run(agent);
 
-await engine.shutdown();
-
-console.log(result);
-
-process.exit(0);
+await runChatLoopInTerminal(userAgent, {
+  welcome:
+    "Hello! I'm a chatbot that can extract content from a website. Try asking me a question!",
+  defaultQuestion: "What is the content of https://www.arcblock.io",
+  onResponse: (response) => console.log(response.text),
+});

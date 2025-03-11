@@ -24,6 +24,8 @@ export class ExecutionEngine extends EventEmitter implements Context {
     this.model = options?.model;
     this.tools = options?.tools ?? [];
     if (options?.agents?.length) this.addAgent(...options.agents);
+
+    this.initProcessExitHandler();
   }
 
   private messageQueue = new MessageQueue();
@@ -242,6 +244,12 @@ export class ExecutionEngine extends EventEmitter implements Context {
       await agent.shutdown();
     }
   }
+
+  private initProcessExitHandler() {
+    const shutdownAndExit = () => this.shutdown().finally(() => process.exit(0));
+    process.on("SIGINT", shutdownAndExit);
+    process.on("exit", shutdownAndExit);
+  }
 }
 
 export class UserAgent<
@@ -253,7 +261,7 @@ export class UserAgent<
       run: (input: I) => Promise<O>;
     },
   ) {
-    super(options);
+    super({ ...options, disableLogging: true });
   }
 
   process(input: I): Promise<O> {

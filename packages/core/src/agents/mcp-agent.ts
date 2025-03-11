@@ -13,7 +13,7 @@ import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./a
 const MCP_AGENT_CLIENT_NAME = "MCPAgent";
 const MCP_AGENT_CLIENT_VERSION = "0.0.1";
 
-const debug = logger.base.extend("mcp-agent:debug", "/");
+const debug = logger.base.extend("mcp");
 
 export interface MCPAgentOptions extends AgentOptions {
   client: Client;
@@ -60,17 +60,14 @@ export class MCPAgent extends Agent {
       version: MCP_AGENT_CLIENT_VERSION,
     });
 
-    debug(`Connecting to MCP server with transport ${transport.constructor.name}`);
-    await client.connect(transport);
-    debug(`Connected to MCP server with transport ${transport.constructor.name}`);
+    await debug.spinner(client.connect(transport), "Connecting to MCP server");
 
     const mcpServer = getMCPServerName(client);
 
-    debug(`Listing tools from ${mcpServer}`);
-    const { tools: mcpTools } = await client.listTools();
-    debug(
-      `Listed tools from ${mcpServer}`,
-      mcpTools.map((i) => i.name),
+    const { tools: mcpTools } = await debug.spinner(
+      client.listTools(),
+      `Listing tools from ${mcpServer}`,
+      ({ tools }) => debug("%O", tools),
     );
 
     const tools = mcpTools.map((tool) => {
@@ -125,11 +122,11 @@ export class MCPTool extends Agent {
   }
 
   async process(input: AgentInput): Promise<AgentOutput> {
-    debug(`Start call tool ${this.name} from ${this.mcpServer} with input`, input);
-
-    const result = await this.client.callTool({ name: this.name, arguments: input });
-
-    debug(`End call tool ${this.name} from ${this.mcpServer} with result`, result);
+    const result = await debug.spinner(
+      this.client.callTool({ name: this.name, arguments: input }),
+      `Call tool ${this.name} from ${this.mcpServer}`,
+      (output) => debug("%O", { input, output }),
+    );
 
     return result;
   }

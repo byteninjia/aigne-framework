@@ -3,7 +3,7 @@ import { type ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context";
 import { userInput } from "../prompt/prompt-builder";
 import { logger } from "../utils/logger";
-import { type TransferAgentOutput, transferAgentOutputKey, transferToAgentOutput } from "./types";
+import { type TransferAgentOutput, transferToAgentOutput } from "./types";
 
 export type AgentInput = Record<string, unknown>;
 
@@ -35,6 +35,8 @@ export interface AgentOptions<
   includeInputInOutput?: boolean;
 
   tools?: (Agent | FunctionAgentFn)[];
+
+  disableLogging?: boolean;
 }
 
 export class Agent<
@@ -60,6 +62,7 @@ export class Agent<
     this.subscribeTopic = options.subscribeTopic;
     this.publishTopic = options.publishTopic as PublishTopic<AgentOutput>;
     if (options.tools?.length) this.tools.push(...options.tools.map(functionToAgent));
+    this.disableLogging = options.disableLogging;
   }
 
   readonly name: string;
@@ -80,6 +83,8 @@ export class Agent<
     get: (t, p, r) => Reflect.get(t, p, r) ?? t.find((t) => t.name === p),
   });
 
+  private disableLogging?: boolean;
+
   addTool<I extends AgentInput, O extends AgentOutput>(tool: Agent<I, O> | FunctionAgentFn<I, O>) {
     this.tools.push(typeof tool === "function" ? functionToAgent(tool) : tool);
   }
@@ -95,24 +100,18 @@ export class Agent<
 
     const parsedInput = this.inputSchema.passthrough().parse(_input) as I;
 
-    logger.debug(`Call agent ${this.name} start`, parsedInput);
+    const result = this.process(parsedInput, context).then((output) => {
+      const parsedOutput = this.outputSchema.passthrough().parse(output) as O;
 
-    const output = await this.process(parsedInput, context);
-
-    const parsedOutput = this.outputSchema.passthrough().parse(output) as O;
-
-    const finalOutput = this.includeInputInOutput
-      ? { ...parsedInput, ...parsedOutput }
-      : parsedOutput;
-
-    logger.debug(`Call agent ${this.name} successfully`, {
-      ...finalOutput,
-      ...(finalOutput[transferAgentOutputKey]
-        ? { [transferAgentOutputKey]: finalOutput[transferAgentOutputKey].agent.name }
-        : {}),
+      return this.includeInputInOutput ? { ...parsedInput, ...parsedOutput } : parsedOutput;
     });
 
-    return finalOutput;
+    return logger.debug.spinner(
+      result,
+      `Call agent ${this.name}`,
+      (output) => logger.debug("%O", { input, output }),
+      { disabled: this.disableLogging },
+    );
   }
 
   process?(input: I, context?: Context): Promise<O>;

@@ -5,6 +5,6 @@ test("logger", async () => {
   expect(logger).toEqual({
     base: expect.any(Function),
     debug: expect.any(Function),
-    error: expect.any(Function),
+    spinner: expect.any(Function),
   });
 });
