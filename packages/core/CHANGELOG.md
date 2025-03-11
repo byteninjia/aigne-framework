@@ -1,3 +1,7 @@
+## 1.1.0-beta.3 (2025-3-11)
+
+- chore: set module type for core package
+
 ## 1.1.0-beta.2 (2025-3-11)
 
 - feat: use PromptBuilder instead of string instructions

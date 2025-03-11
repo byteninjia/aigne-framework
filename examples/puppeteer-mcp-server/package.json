@@ -1,14 +1,15 @@
 {
   "name": "@aigne/example-puppeteer-mcp-server",
-  "version": "1.1.0-beta.2",
+  "version": "1.1.0-beta.3",
   "description": "A collection of example agents demonstrating the capabilities of the Aigne framework.",
+  "author": "",
+  "license": "ISC",
   "main": "index.js",
   "bin": "index.ts",
+  "files": [".env", "index.ts", "README.md"],
   "scripts": {
     "start": "npx -y bun run index.ts"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@aigne/core": "workspace:^",
     "zod": "^3.24.2"
