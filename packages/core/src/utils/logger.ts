@@ -49,41 +49,70 @@ function createDebugger(namespace: string): DebugWithSpinner {
 
 const globalSpinner = ora();
 
+interface SpinnerTask<T = unknown> {
+  promise: Promise<T>;
+  message?: string;
+  callback?: (result: T) => void;
+  status?: "fail" | "succeed";
+  result?: T;
+}
+
+const globalSpinnerTasks: SpinnerTask[] = [];
+
 async function spinner<T>(
   promise: Promise<T>,
   message?: string,
   callback?: (result: T) => void,
 ): Promise<T> {
-  const { isSpinning, text } = globalSpinner;
+  const task: SpinnerTask<T> = { promise, message, callback };
+  globalSpinnerTasks.push(task as SpinnerTask);
 
-  try {
-    globalSpinner.start(message || " ");
-    const result = await promise;
-    if (message) globalSpinner.succeed(message);
-    else globalSpinner.stop();
+  globalSpinner.start(message || " ");
+
+  await promise
+    .then((result) => {
+      task.result = result;
+      task.status = "succeed";
+    })
+    .catch(() => {
+      task.status = "fail";
+    });
+
+  // Once the promise resolves or rejects, it updates the spinner status and processes
+  // all completed tasks in a Last-In-First-Out (LIFO) order.
+  for (;;) {
+    const task = globalSpinnerTasks.at(-1);
+    if (!task) break;
+
+    // Recover spinner state for last running task
+    if (!task.status) {
+      globalSpinner.start(task.message || " ");
+      break;
+    }
+
+    globalSpinnerTasks.pop();
+
+    if (task.message) {
+      if (task.status === "fail") globalSpinner.fail(task.message);
+      else globalSpinner.succeed(task.message);
+    } else {
+      globalSpinner.stop();
+    }
 
     // NOTE: This is a workaround to make sure the spinner stops spinning before the next tick
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    callback?.(result);
-
-    // NOTE: This is a workaround to make sure the spinner stops spinning before the next tick
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    return result;
-  } catch (error) {
-    globalSpinner.fail(message || " ");
-    throw error;
-  } finally {
-    // Recover the spinner state
-    if (isSpinning) globalSpinner.start(text || " ");
+    if (task.status === "succeed") task.callback?.(task.result);
   }
+
+  return promise;
 }
 
 const base = createDebugger("aigne");
 
-export const logger = {
+export const logger = Object.assign(debug, {
+  globalSpinner,
   base,
   debug: base.extend("core"),
   spinner,
-};
+});

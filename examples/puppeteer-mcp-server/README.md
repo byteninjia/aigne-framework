@@ -78,14 +78,12 @@ const agent = AIAgent.from({
 const result = await engine.run("extract content from https://www.arcblock.io", agent);
 
 console.log(result);
-```
+// output:
+// {
+//   text: "The content extracted from the website [ArcBlock](https://www.arcblock.io) is as follows:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ...",
+// }
 
-Run the example will output the extracted content from the ArcBlock website:
-
-```json
-{
-  "text": "Here is the extracted content from the ArcBlock website:\n\n---\n\n**Redefining Software Architect and Ecosystems**\n\nA total solution for building decentralized applications ...",
-}
+await engine.shutdown();
 ```
 
 ## License

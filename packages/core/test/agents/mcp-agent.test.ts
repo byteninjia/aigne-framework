@@ -1,73 +1,47 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, realpath, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MCPAgent } from "@aigne/core";
 
 test(
   "MCPAgent from command",
   async () => {
-    const dir = await realpath(await mkdtemp(join(tmpdir(), "mcp-agent-test-")));
-
-    const filesystem = await MCPAgent.from({
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", dir],
+    const mcp = await MCPAgent.from({
+      command: "bun",
+      args: [join(import.meta.dir, "../_mocks/mock-mcp-server.ts")],
     });
 
     try {
-      const tools = [
-        "read_file",
-        "read_multiple_files",
-        "write_file",
-        "edit_file",
-        "create_directory",
-        "list_directory",
-        "directory_tree",
-        "move_file",
-        "search_files",
-        "get_file_info",
-        "list_allowed_directories",
-      ];
+      expect(mcp.tools.map((i) => i.name)).toEqual(["echo"]);
+      expect(await mcp.tools.echo?.call({ message: "AIGNE" })).toEqual(
+        expect.objectContaining({
+          content: [
+            {
+              type: "text",
+              text: "Tool echo: AIGNE",
+            },
+          ],
+        }),
+      );
 
-      expect(filesystem.tools.map((i) => i.name)).toEqual(tools);
+      expect(mcp.prompts.map((i) => i.name)).toEqual(["echo"]);
 
-      const listAllowedDirectories = await filesystem.tools.list_allowed_directories?.call({});
-      expect(listAllowedDirectories).toEqual({
-        content: [
-          {
-            type: "text",
-            text: expect.stringContaining(dir),
-          },
-        ],
-      });
+      const prompt = await mcp.prompts.echo?.call({ message: "AIGNE" });
 
-      const writeResult = await filesystem.tools.write_file?.call({
-        path: join(dir, "/foo.txt"),
-        content: "Hello, AIGNE!",
-      });
-      expect(writeResult).toEqual({
-        content: [
-          {
-            type: "text",
-            text: expect.stringMatching(/successfully\s+wrote\s+to\s/i),
-          },
-        ],
-      });
-
-      const readResult = await filesystem.tools.read_file?.call({
-        path: join(dir, "/foo.txt"),
-      });
-      expect(readResult).toEqual({
-        content: [
-          {
-            type: "text",
-            text: expect.stringContaining("Hello, AIGNE!"),
-          },
-        ],
-      });
+      expect(prompt).toEqual(
+        expect.objectContaining({
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: "Please process this message: AIGNE",
+              },
+            },
+          ],
+        }),
+      );
     } finally {
-      await filesystem.shutdown();
-      await rm(dir, { recursive: true, force: true });
+      await mcp.shutdown();
     }
   },
   {

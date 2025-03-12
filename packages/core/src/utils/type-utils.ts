@@ -18,3 +18,12 @@ export function get(obj: unknown, path: string | string[], type?: "string" | "nu
   if (type === "string" && typeof v === "string") return v;
   if (type === "number" && typeof v === "number") return v;
 }
+
+export function createAccessorArray<T>(
+  array: T[],
+  accessor: (array: T[], name: string) => T | undefined,
+): T[] & { [key: string]: T } {
+  return new Proxy(array, {
+    get: (t, p, r) => Reflect.get(t, p, r) ?? accessor(array, p as string),
+  }) as T[] & { [key: string]: T };
+}

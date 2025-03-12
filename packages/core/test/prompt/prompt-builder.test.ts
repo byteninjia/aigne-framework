@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { FunctionAgent } from "@aigne/core";
+import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
 import { z } from "zod";
 import { AIAgent } from "../../src/agents/ai-agent";
 import {
@@ -51,12 +52,9 @@ test("addMessagesToInput function should add messages correctly", () => {
 });
 
 test("PromptBuilder should build messages correctly", async () => {
-  const agent = AIAgent.from({
-    name: "TestAgent",
-    instructions: "Test instructions",
-  });
+  const builder = PromptBuilder.from("Test instructions");
 
-  const prompt1 = await agent.instructions.build({ input: userInput("Hello"), agent });
+  const prompt1 = await builder.build({ input: userInput("Hello") });
 
   expect(prompt1.messages).toEqual([
     {
@@ -69,7 +67,7 @@ test("PromptBuilder should build messages correctly", async () => {
     },
   ]);
 
-  const prompt2 = await agent.instructions.build({ input: userInput({ name: "foo" }), agent });
+  const prompt2 = await builder.build({ input: userInput({ name: "foo" }) });
   expect(prompt2.messages).toEqual([
     {
       role: "system",
@@ -160,7 +158,7 @@ test("PromptBuilder should build tools correctly", async () => {
   });
 });
 
-test("PromptBuilder should build toolChoice correctly", async () => {
+test("PromptBuilder should build toolChoice with router mode correctly", async () => {
   const tool = FunctionAgent.from({
     name: "TestTool",
     description: "Test tool description",
@@ -177,6 +175,59 @@ test("PromptBuilder should build toolChoice correctly", async () => {
   const prompt = await agent.instructions.build({ input: {}, agent });
 
   expect(prompt.toolChoice).toEqual("required");
+});
+
+test("PromptBuilder from string", async () => {
+  const builder = PromptBuilder.from("Hello, {{agentName}}!");
+
+  const prompt = await builder.build({ input: { agentName: "Alice" } });
+
+  expect(prompt).toEqual({
+    messages: [
+      {
+        role: "system",
+        content: "Hello, Alice!",
+      },
+    ],
+  });
+});
+
+test("PromptBuilder from MCP prompt result", async () => {
+  const prompt: GetPromptResult = {
+    description: "Test prompt",
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: "Hello",
+        },
+      },
+      {
+        role: "assistant",
+        content: {
+          type: "text",
+          text: "How can I help you?",
+        },
+      },
+    ],
+  };
+
+  const promptBuilder = PromptBuilder.from(prompt);
+  expect(await promptBuilder.build({})).toEqual(
+    expect.objectContaining({
+      messages: [
+        {
+          role: "user",
+          content: "Hello",
+        },
+        {
+          role: "agent",
+          content: "How can I help you?",
+        },
+      ],
+    }),
+  );
 });
 
 test("PromptBuilder from file", async () => {

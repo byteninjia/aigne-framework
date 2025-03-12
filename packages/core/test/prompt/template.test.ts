@@ -11,6 +11,11 @@ test("PromptTemplate.format", async () => {
   expect(prompt).toBe("Hello, Alice!");
 });
 
+test("PromptTemplate.format with variable value is nil", async () => {
+  const prompt = PromptTemplate.from("Hello, {{name}}!").format({});
+  expect(prompt).toBe("Hello, !");
+});
+
 test("PromptTemplate.format with json variable", async () => {
   const prompt = PromptTemplate.from("Hello, {{name}}!").format({ name: { username: "Alice" } });
   expect(prompt).toBe('Hello, {"username":"Alice"}!');

@@ -3,6 +3,7 @@ import { type ZodObject, type ZodType, z } from "zod";
 import type { Context } from "../execution-engine/context";
 import { userInput } from "../prompt/prompt-builder";
 import { logger } from "../utils/logger";
+import { createAccessorArray } from "../utils/type-utils";
 import { type TransferAgentOutput, transferToAgentOutput } from "./types";
 
 export type AgentInput = Record<string, unknown>;
@@ -79,9 +80,7 @@ export class Agent<
 
   readonly publishTopic?: PublishTopic<AgentOutput>;
 
-  readonly tools = new Proxy([] as unknown as Agent[] & { [key: string]: Agent }, {
-    get: (t, p, r) => Reflect.get(t, p, r) ?? t.find((t) => t.name === p),
-  });
+  readonly tools = createAccessorArray<Agent>([], (arr, name) => arr.find((t) => t.name === name));
 
   private disableLogging?: boolean;
 
@@ -109,7 +108,7 @@ export class Agent<
     return logger.debug.spinner(
       result,
       `Call agent ${this.name}`,
-      (output) => logger.debug("%O", { input, output }),
+      (output) => logger.debug("input: %O\noutput: %O", input, output),
       { disabled: this.disableLogging },
     );
   }

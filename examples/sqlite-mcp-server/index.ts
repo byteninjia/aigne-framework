@@ -1,10 +1,12 @@
 #!/usr/bin/env npx -y bun
 
+import { join } from "node:path";
 import {
   AIAgent,
   ChatModelOpenAI,
   ExecutionEngine,
   MCPAgent,
+  PromptBuilder,
   runChatLoopInTerminal,
 } from "@aigne/core";
 
@@ -12,31 +14,33 @@ const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const puppeteer = await MCPAgent.from({
-  command: "npx",
-  args: ["-y", "@modelcontextprotocol/server-puppeteer"],
+const sqlite = await MCPAgent.from({
+  command: "uvx",
+  args: [
+    "-q",
+    "mcp-server-sqlite",
+    "--db-path",
+    join(process.cwd(), "aigne-example-sqlite-mcp-server.db"),
+  ],
 });
+
+const prompt = await sqlite.prompts["mcp-demo"]?.call({ topic: "product service" });
+if (!prompt) throw new Error("Prompt mcp-demo not found");
 
 const engine = new ExecutionEngine({
   model,
-  tools: [puppeteer],
+  tools: [sqlite],
 });
 
 const agent = AIAgent.from({
-  instructions: `\
-## Steps to extract content from a website
-1. navigate to the url
-2. evaluate document.body.innerText to get the content
-`,
   enableHistory: true,
+  instructions: PromptBuilder.from(prompt),
 });
 
 const userAgent = await engine.run(agent);
 
 await runChatLoopInTerminal(userAgent, {
-  welcome:
-    "Hello! I'm a chatbot that can extract content from a website. Try asking me a question!",
-  defaultQuestion: "What is the content of https://www.arcblock.io",
+  initialCall: {},
   onResponse: (response) => console.log(response.text),
 });
 

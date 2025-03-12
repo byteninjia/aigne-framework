@@ -1,7 +1,7 @@
 {
-  "name": "@aigne/example-puppeteer-mcp-server",
+  "name": "@aigne/example-sqlite-mcp-server",
   "version": "1.1.0-beta.5",
-  "description": "A demonstration of using AIGNE Framework and Puppeteer MCP Server to extract content from websites using Puppeteer",
+  "description": "A demonstration of using AIGNE Framework and Sqlite MCP Server to interact with a SQLite database",
   "author": "",
   "license": "ISC",
   "main": "index.js",

@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
+import { isNil } from "lodash";
 import { ZodObject, type ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { Agent, type AgentInput } from "../agents/agent";
@@ -13,6 +15,7 @@ import type {
   ChatModelInputToolChoice,
 } from "../models/chat";
 import {
+  AgentMessageTemplate,
   ChatMessagesTemplate,
   SystemMessageTemplate,
   UserMessageTemplate,
@@ -51,10 +54,12 @@ export function addMessagesToInput(
 }
 
 export interface PromptBuilderOptions {
-  instructions?: string;
+  instructions?: string | ChatMessagesTemplate;
 }
 
 export interface PromptBuilderBuildOptions {
+  enableHistory?: boolean;
+  maxHistoryMessages?: number;
   context?: Context;
   agent?: AIAgent;
   input?: AgentInput;
@@ -63,14 +68,21 @@ export interface PromptBuilderBuildOptions {
 
 export class PromptBuilder {
   static from(instructions: string): PromptBuilder;
+  static from(instructions: GetPromptResult): PromptBuilder;
   static from(instructions: { path: string }): Promise<PromptBuilder>;
-  static from(instructions: string | { path: string }): PromptBuilder | Promise<PromptBuilder>;
-  static from(instructions: string | { path: string }): PromptBuilder | Promise<PromptBuilder> {
-    if (typeof instructions === "string") {
-      return new PromptBuilder({ instructions });
-    }
+  static from(
+    instructions: string | { path: string } | GetPromptResult,
+  ): PromptBuilder | Promise<PromptBuilder>;
+  static from(
+    instructions: string | { path: string } | GetPromptResult,
+  ): PromptBuilder | Promise<PromptBuilder> {
+    if (typeof instructions === "string") return new PromptBuilder({ instructions });
 
-    return PromptBuilder.fromFile(instructions.path);
+    if (isFromPromptResult(instructions)) return PromptBuilder.fromMCPPromptResult(instructions);
+
+    if (isFromPath(instructions)) return PromptBuilder.fromFile(instructions.path);
+
+    throw new Error(`Invalid instructions ${instructions}`);
   }
 
   private static async fromFile(path: string): Promise<PromptBuilder> {
@@ -78,11 +90,33 @@ export class PromptBuilder {
     return PromptBuilder.from(text);
   }
 
+  private static fromMCPPromptResult(result: GetPromptResult): PromptBuilder {
+    return new PromptBuilder({
+      instructions: ChatMessagesTemplate.from(
+        result.messages.map((i) => {
+          if (i.content.type !== "text")
+            throw new Error(`Unsupported content type ${i.content.type}`);
+
+          if (i.role === "user") return UserMessageTemplate.from(i.content.text);
+          if (i.role === "assistant") return AgentMessageTemplate.from(i.content.text);
+
+          throw new Error(`Unsupported role ${i.role}`);
+        }),
+      ),
+    });
+  }
+
   constructor(options?: PromptBuilderOptions) {
     this.instructions = options?.instructions;
   }
 
-  instructions?: string;
+  instructions?: string | ChatMessagesTemplate;
+
+  histories: ChatModelInputMessage[] = [];
+
+  addHistory(...messages: ChatModelInputMessage[]) {
+    this.histories.push(...messages);
+  }
 
   async build(
     options: PromptBuilderBuildOptions,
@@ -97,21 +131,40 @@ export class PromptBuilder {
   private buildMessages(options: PromptBuilderBuildOptions): ChatModelInputMessage[] {
     const { input } = options;
 
-    const template = ChatMessagesTemplate.from([]);
+    const messages =
+      (typeof this.instructions === "string"
+        ? ChatMessagesTemplate.from([SystemMessageTemplate.from(this.instructions)])
+        : this.instructions
+      )?.format(options.input) ?? [];
 
-    if (this.instructions) template.messages.push(SystemMessageTemplate.from(this.instructions));
-
-    const userInputMessage = input?.[USER_INPUT_MESSAGE_KEY];
-    if (typeof userInputMessage === "string") {
-      template.messages.push(UserMessageTemplate.from(userInputMessage));
-    } else if (userInputMessage) {
-      const messages = parseChatMessages(userInputMessage);
-
-      if (messages) template.messages.push(...messages);
-      else template.messages.push(UserMessageTemplate.from(JSON.stringify(userInputMessage)));
+    if (options.enableHistory) {
+      messages.push(
+        ...(options.maxHistoryMessages
+          ? this.histories.slice(-options.maxHistoryMessages)
+          : this.histories),
+      );
     }
 
-    return template.format(input);
+    const userMessages: ChatModelInputMessage[] = [];
+    const userInputMessage = input?.[USER_INPUT_MESSAGE_KEY];
+
+    // Parse messages from the user input with the key $user_input_message
+    if (!isNil(userInputMessage)) {
+      if (typeof userInputMessage === "string") {
+        userMessages.push(UserMessageTemplate.from(userInputMessage).format());
+      } else {
+        const messages = parseChatMessages(userInputMessage);
+        if (messages) userMessages.push(...messages.map((i) => i.format()));
+        else userMessages.push(UserMessageTemplate.from(JSON.stringify(userInputMessage)).format());
+      }
+    }
+
+    if (userMessages.length) {
+      if (options.enableHistory) this.addHistory(...userMessages);
+      messages.push(...userMessages);
+    }
+
+    return messages;
   }
 
   private buildResponseFormat(
@@ -180,6 +233,16 @@ export class PromptBuilder {
       toolChoice,
     };
   }
+}
+
+function isFromPromptResult(
+  value: Parameters<typeof PromptBuilder.from>[0],
+): value is GetPromptResult {
+  return typeof value === "object" && "messages" in value && Array.isArray(value.messages);
+}
+
+function isFromPath(value: Parameters<typeof PromptBuilder.from>[0]): value is { path: string } {
+  return typeof value === "object" && "path" in value && typeof value.path === "string";
 }
 
 function isEmptyObjectType(schema: ZodType) {

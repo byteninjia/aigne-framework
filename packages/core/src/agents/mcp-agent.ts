@@ -5,9 +5,11 @@ import {
   type StdioServerParameters,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { type JsonSchema, jsonSchemaToZod } from "@n8n/json-schema-to-zod";
-import { type ZodObject, type ZodType, z } from "zod";
+import type { CallToolResult, GetPromptResult } from "@modelcontextprotocol/sdk/types";
+import {} from "zod";
 import { logger } from "../utils/logger";
+import { promptFromMCPPrompt, toolFromMCPTool } from "../utils/mcp-utils";
+import { createAccessorArray } from "../utils/type-utils";
 import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent";
 
 const MCP_AGENT_CLIENT_NAME = "MCPAgent";
@@ -17,6 +19,8 @@ const debug = logger.base.extend("mcp");
 
 export interface MCPAgentOptions extends AgentOptions {
   client: Client;
+
+  prompts?: MCPPrompt[];
 }
 
 export type MCPServerOptions = SSEServerParameters | StdioServerParameters;
@@ -47,7 +51,7 @@ export class MCPAgent extends Agent {
     }
 
     if (isStdioServerParameters(options)) {
-      const transport = new StdioClientTransport(options);
+      const transport = new StdioClientTransport({ ...options, stderr: "pipe" });
       return MCPAgent.fromTransport(transport);
     }
 
@@ -64,40 +68,40 @@ export class MCPAgent extends Agent {
 
     const mcpServer = getMCPServerName(client);
 
-    const { tools: mcpTools } = await debug.spinner(
-      client.listTools(),
-      `Listing tools from ${mcpServer}`,
-      ({ tools }) => debug("%O", tools),
-    );
+    const { tools: isToolsAvailable, prompts: isPromptsAvailable } =
+      client.getServerCapabilities() ?? {};
 
-    const tools = mcpTools.map((tool) => {
-      return new MCPTool({
-        client,
-        name: tool.name,
-        description: tool.description,
-        inputSchema: jsonSchemaToZod<ZodObject<Record<string, ZodType>>>(
-          tool.inputSchema as JsonSchema,
-        ),
-        outputSchema: z
-          .object({
-            _meta: z.record(z.unknown()).optional(),
-            content: z.array(z.record(z.unknown())),
-            isError: z.boolean().optional(),
-          })
-          .passthrough(),
-      });
-    });
+    const tools = isToolsAvailable
+      ? await debug
+          .spinner(client.listTools(), `Listing tools from ${mcpServer}`, ({ tools }) =>
+            debug("%O", tools),
+          )
+          .then(({ tools }) => tools.map((tool) => toolFromMCPTool(client, tool)))
+      : undefined;
 
-    return new MCPAgent({ client, tools });
+    const prompts = isPromptsAvailable
+      ? await debug
+          .spinner(client.listPrompts(), `Listing prompts from ${mcpServer}`, ({ prompts }) =>
+            debug("%O", prompts),
+          )
+          .then(({ prompts }) => prompts.map((prompt) => promptFromMCPPrompt(client, prompt)))
+      : undefined;
+
+    return new MCPAgent({ client, tools, prompts });
   }
 
   constructor(options: MCPAgentOptions) {
     super(options);
 
     this.client = options.client;
+    if (options.prompts?.length) this.prompts.push(...options.prompts);
   }
 
   private client: Client;
+
+  readonly prompts = createAccessorArray<MCPPrompt>([], (arr, name) =>
+    arr.find((i) => i.name === name),
+  );
 
   override async shutdown() {
     super.shutdown();
@@ -105,30 +109,45 @@ export class MCPAgent extends Agent {
   }
 }
 
-export interface MCPToolOptions extends AgentOptions {
+export interface MCPToolBaseOptions<I extends AgentInput, O extends AgentOutput>
+  extends AgentOptions<I, O> {
   client: Client;
 }
 
-export class MCPTool extends Agent {
-  constructor(options: MCPToolOptions) {
+export abstract class MCPBase<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
+  constructor(options: MCPToolBaseOptions<I, O>) {
     super(options);
     this.client = options.client;
   }
 
-  private client: Client;
+  protected client: Client;
 
-  private get mcpServer() {
+  protected get mcpServer() {
     return getMCPServerName(this.client);
   }
+}
 
-  async process(input: AgentInput): Promise<AgentOutput> {
+export class MCPTool extends MCPBase<AgentInput, CallToolResult> {
+  async process(input: AgentInput): Promise<CallToolResult> {
     const result = await debug.spinner(
       this.client.callTool({ name: this.name, arguments: input }),
       `Call tool ${this.name} from ${this.mcpServer}`,
-      (output) => debug("%O", { input, output }),
+      (output) => debug("input: %O\noutput: %O", input, output),
     );
 
-    return result;
+    return result as CallToolResult;
+  }
+}
+
+export class MCPPrompt extends MCPBase<{ [key: string]: string }, GetPromptResult> {
+  async process(input: AgentInput): Promise<GetPromptResult> {
+    const result = await debug.spinner(
+      this.client.getPrompt({ name: this.name, arguments: input as Record<string, string> }),
+      `Get prompt ${this.name} from ${this.mcpServer}`,
+      (output) => debug("input: %O\noutput: %O", input, output),
+    );
+
+    return result as GetPromptResult;
   }
 }
 

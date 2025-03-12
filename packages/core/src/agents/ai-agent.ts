@@ -1,11 +1,12 @@
 import type { Context } from "../execution-engine/context";
-import type { ChatModel, ChatModelOutputToolCall } from "../models/chat";
+import type { ChatModel, ChatModelInputMessage, ChatModelOutputToolCall } from "../models/chat";
 import { PromptBuilder } from "../prompt/prompt-builder";
 import { AgentMessageTemplate, ToolMessageTemplate } from "../prompt/template";
 import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent";
 import { type TransferAgentOutput, isTransferAgentOutput, transferAgentOutputKey } from "./types";
 
 const DEFAULT_OUTPUT_KEY = "text";
+const DEFAULT_MAX_HISTORY_MESSAGES = 10;
 
 export interface AIAgentOptions<
   I extends AgentInput = AgentInput,
@@ -18,6 +19,10 @@ export interface AIAgentOptions<
   outputKey?: string;
 
   toolChoice?: AIAgentToolChoice;
+
+  enableHistory?: boolean;
+
+  maxHistoryMessages?: number;
 }
 
 export type AIAgentToolChoice = "auto" | "none" | "required" | "router" | Agent;
@@ -42,6 +47,8 @@ export class AIAgent<
         : (options.instructions ?? new PromptBuilder());
     this.outputKey = options.outputKey;
     this.toolChoice = options.toolChoice;
+    this.enableHistory = options.enableHistory;
+    this.maxHistoryMessages = options.maxHistoryMessages ?? DEFAULT_MAX_HISTORY_MESSAGES;
   }
 
   model?: ChatModel;
@@ -52,13 +59,19 @@ export class AIAgent<
 
   toolChoice?: AIAgentToolChoice;
 
+  enableHistory?: boolean;
+
+  maxHistoryMessages: number;
+
   async process(input: I, context?: Context): Promise<O> {
     const model = context?.model ?? this.model;
     if (!model) throw new Error("model is required to run AIAgent");
 
     let transferOutput: TransferAgentOutput | undefined;
 
-    const { toolAgents, ...modelInput } = await this.instructions.build({
+    const { toolAgents, messages, ...modelInput } = await this.instructions.build({
+      enableHistory: this.enableHistory,
+      maxHistoryMessages: this.maxHistoryMessages,
       agent: this,
       input,
       model,
@@ -67,8 +80,13 @@ export class AIAgent<
 
     const toolsMap = new Map<string, Agent>(toolAgents?.map((i) => [i.name, i]));
 
+    const toolCallMessages: ChatModelInputMessage[] = [];
+
     for (;;) {
-      const { text, json, toolCalls } = await model.call(modelInput, context);
+      const { text, json, toolCalls } = await model.call(
+        { ...modelInput, messages: messages.concat(toolCallMessages) },
+        context,
+      );
 
       if (toolCalls?.length) {
         const executedToolCalls: {
@@ -76,6 +94,7 @@ export class AIAgent<
           output: AgentOutput;
         }[] = [];
 
+        // Execute tools
         for (const call of toolCalls) {
           const tool = toolsMap.get(call.function.name);
           if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
@@ -90,32 +109,36 @@ export class AIAgent<
           }
         }
 
-        if (this.toolChoice === "router") {
-          const output = executedToolCalls[0]?.output;
-          if (!output || executedToolCalls.length !== 1) {
-            throw new Error("Router toolChoice requires exactly one tool to be executed");
-          }
-
-          return output as O;
-        }
-
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
-          modelInput.messages.push(
+          toolCallMessages.push(
             AgentMessageTemplate.from(executedToolCalls.map(({ call }) => call)).format(),
-          );
-
-          modelInput.messages.push(
             ...executedToolCalls.map(({ call, output }) =>
               ToolMessageTemplate.from(output, call.id).format(),
             ),
           );
+
+          // Return the output of the first tool if the toolChoice is "router"
+          if (this.toolChoice === "router") {
+            const output = executedToolCalls[0]?.output;
+            if (!output || executedToolCalls.length !== 1) {
+              throw new Error("Router toolChoice requires exactly one tool to be executed");
+            }
+
+            return output as O;
+          }
 
           continue;
         }
       }
 
       const result = {} as O;
+
+      if (json) {
+        this.instructions.addHistory(AgentMessageTemplate.from(JSON.stringify(json)).format());
+      } else if (text) {
+        this.instructions.addHistory(AgentMessageTemplate.from(text).format());
+      }
 
       if (modelInput.responseFormat?.type === "json_schema") {
         Object.assign(result, json);
