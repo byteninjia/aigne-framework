@@ -8,6 +8,14 @@ This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/a
 - An [OpenAI API key](https://openai.com).
 - [Pnpm](https://pnpm.io) - if you want to run the example from source code.
 
+## Try without Installation
+
+```bash
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY # setup your OpenAI API key
+
+npx -y @aigne/example-sqlite-mcp-server # run the example
+```
+
 ## Installation
 
 ### Clone the Repository
