@@ -7,8 +7,11 @@ import {
   ExecutionEngine,
   MCPAgent,
   PromptBuilder,
+  logger,
   runChatLoopInTerminal,
 } from "@aigne/core";
+
+logger.enable(`aigne:mcp,${process.env.DEBUG}`);
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,

@@ -1,3 +1,7 @@
+## 1.1.0-beta.6 (2025-3-13)
+
+- chore(examples): default enable mcp debug message for examples
+
 ## 1.1.0-beta.5 (2025-3-13)
 
 - feat: support chat history in PromptBuilder

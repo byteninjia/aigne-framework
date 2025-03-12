@@ -8,4 +8,5 @@ export * from "./models/chat";
 export * from "./models/chat-openai";
 export * from "./prompt/prompt-builder";
 export * from "./prompt/template";
+export * from "./utils/logger";
 export * from "./utils/run-chat-loop";
