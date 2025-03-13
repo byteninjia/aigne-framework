@@ -98,16 +98,12 @@ export class PromptBuilder {
 
           if (i.content.type === "text") content = i.content.text;
           else if (i.content.type === "resource") {
-            const { mimeType, blob } = i.content.resource;
-            if (typeof blob !== "string")
-              throw new Error(`Unsupported resource blob type ${typeof blob}`);
+            const { resource } = i.content;
 
-            if (!mimeType || mimeType === "text/plain") {
-              content = Buffer.from(blob, "base64").toString("utf-8");
-            } else if (/image\/.*/.test(mimeType)) {
-              content = [{ type: "image_url", url: blob }];
-            } else {
-              throw new Error(`Unsupported resource mimeType ${mimeType}`);
+            if (typeof resource.text === "string") {
+              content = resource.text;
+            } else if (typeof resource.blob === "string") {
+              content = [{ type: "image_url", url: resource.blob }];
             }
           } else if (i.content.type === "image") {
             content = [{ type: "image_url", url: i.content.data }];

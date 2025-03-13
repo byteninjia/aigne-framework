@@ -209,7 +209,7 @@ test("PromptBuilder from MCP prompt result", async () => {
           type: "resource",
           resource: {
             uri: "echo://Hello",
-            blob: Buffer.from("Resource echo: Hello").toString("base64"),
+            text: "Resource echo: Hello",
             mimeType: "text/plain",
           },
         },
