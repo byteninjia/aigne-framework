@@ -1,3 +1,7 @@
+## 1.1.0-beta.9 (2025-3-13)
+
+- fix(MCP): catch list resource error treat as empty list
+
 ## 1.1.0-beta.8 (2025-3-13)
 
 - fix(AIAgent): should pass both arguments (model generated) and input (user input) to tool

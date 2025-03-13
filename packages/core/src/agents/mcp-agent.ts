@@ -100,7 +100,12 @@ export class MCPAgent extends Agent {
     const resources = isResourcesAvailable
       ? await debug
           .spinner(
-            Promise.all([client.listResources(), client.listResourceTemplates()]),
+            // TODO: should conditionally call listResourceTemplates based on the server capabilities
+            // but the capability is not correct in the current SDK version
+            Promise.all([
+              client.listResources().catch(() => ({ resources: [] })),
+              client.listResourceTemplates().catch(() => ({ resourceTemplates: [] })),
+            ]),
             `Listing resources from ${mcpServer}`,
             ([{ resources }, { resourceTemplates }]) =>
               debug("%O\n%O", resources, resourceTemplates),

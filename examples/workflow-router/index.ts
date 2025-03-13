@@ -1,6 +1,6 @@
 #!/usr/bin/env npx -y bun
 
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, runChatLoopInTerminal } from "@aigne/core";
+import { AIAgent, ChatModelOpenAI, ExecutionEngine, runChatLoopInTerminal } from "@aigne/core-next";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,

@@ -1,4 +1,4 @@
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
