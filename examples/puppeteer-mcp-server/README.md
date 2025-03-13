@@ -4,9 +4,9 @@ This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/a
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org) and npm installed on your machine.
-- An [OpenAI API key](https://openai.com).
-- [Pnpm](https://pnpm.io) - if you want to run the example from source code.
+- [Node.js](https://nodejs.org) and npm installed on your machine
+- [OpenAI API key](https://platform.openai.com/api-keys) used to interact with OpenAI API
+- [Pnpm](https://pnpm.io) [Optional] if you want to run the example from source code
 
 ## Try without Installation
 
@@ -51,7 +51,12 @@ pnpm start
 The following example demonstrates how to extract content from a website:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core";
+import {
+  AIAgent,
+  ChatModelOpenAI,
+  ExecutionEngine,
+  MCPAgent,
+} from "@aigne/core";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -75,7 +80,10 @@ const agent = AIAgent.from({
 `,
 });
 
-const result = await engine.run("extract content from https://www.arcblock.io", agent);
+const result = await engine.run(
+  "extract content from https://www.arcblock.io",
+  agent
+);
 
 console.log(result);
 // output:

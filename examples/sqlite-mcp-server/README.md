@@ -1,12 +1,13 @@
 # Sqlite MCP Server Demo
 
-This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) and [Sqlite MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite) to interact with SQLite databases.
+This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/aigne-framework) and [MCP Server SQlite](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite) to interact with SQLite databases.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org) and npm installed on your machine.
-- An [OpenAI API key](https://openai.com).
-- [Pnpm](https://pnpm.io) - if you want to run the example from source code.
+- [Node.js](https://nodejs.org) and npm installed on your machine
+- [OpenAI API key](https://platform.openai.com/api-keys) used to interact with OpenAI API
+- [uv](https://github.com/astral-sh/uv) python environment for running [MCP Server SQlite](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite)
+- [Pnpm](https://pnpm.io) [Optional] if you want to run the example from source code
 
 ## Try without Installation
 
@@ -52,7 +53,12 @@ The following example demonstrates how to interact with an SQLite database:
 
 ```typescript
 import { join } from "node:path";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core";
+import {
+  AIAgent,
+  ChatModelOpenAI,
+  ExecutionEngine,
+  MCPAgent,
+} from "@aigne/core";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -60,7 +66,12 @@ const model = new ChatModelOpenAI({
 
 const sqlite = await MCPAgent.from({
   command: "uvx",
-  args: ["-q", "mcp-server-sqlite", "--db-path", join(process.cwd(), "usages.db")],
+  args: [
+    "-q",
+    "mcp-server-sqlite",
+    "--db-path",
+    join(process.cwd(), "usages.db"),
+  ],
 });
 
 const engine = new ExecutionEngine({
@@ -73,7 +84,10 @@ const agent = AIAgent.from({
 });
 
 console.log(
-  await engine.run("create a product table with columns name description and createdAt", agent),
+  await engine.run(
+    "create a product table with columns name description and createdAt",
+    agent
+  )
 );
 // output:
 // {
@@ -93,7 +107,6 @@ console.log(await engine.run("how many products?", agent));
 // }
 
 await engine.shutdown();
-
 ```
 
 ## License
