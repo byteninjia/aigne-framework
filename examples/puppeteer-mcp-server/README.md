@@ -56,7 +56,7 @@ import {
   ChatModelOpenAI,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core";
+} from "@aigne/core-next";
 
 const model = new ChatModelOpenAI({
   apiKey: process.env.OPENAI_API_KEY,

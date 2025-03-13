@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { FunctionAgent } from "@aigne/core";
+import { FunctionAgent } from "@aigne/core-next";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
 import { z } from "zod";
 import { AIAgent } from "../../src/agents/ai-agent";

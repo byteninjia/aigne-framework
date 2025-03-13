@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { FunctionAgent } from "@aigne/core";
+import { FunctionAgent } from "@aigne/core-next";
 import {
   isTransferAgentOutput,
   transferAgentOutputKey,

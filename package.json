@@ -1,11 +1,15 @@
 {
   "name": "aigne-framework",
-  "version": "1.1.0-beta.6",
-  "description": "",
+  "version": "1.1.0-beta.7",
+  "description": "AIGNE framework is a collection of libraries and tools for building AI-powered applications",
   "private": true,
-  "keywords": [],
-  "author": "",
+  "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
+  "homepage": "https://github.com/AIGNE-io/aigne-framework",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AIGNE-io/aigne-framework"
+  },
   "scripts": {
     "lint": "biome check",
     "lint:fix": "biome check --write",

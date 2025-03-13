@@ -9,7 +9,7 @@ import {
   PromptBuilder,
   logger,
   runChatLoopInTerminal,
-} from "@aigne/core";
+} from "@aigne/core-next";
 
 logger.enable(`aigne:mcp,${process.env.DEBUG}`);
 

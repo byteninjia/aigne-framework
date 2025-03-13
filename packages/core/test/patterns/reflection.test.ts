@@ -6,7 +6,7 @@ import {
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core";
+} from "@aigne/core-next";
 import { z } from "zod";
 
 test("Patterns - Reflection", async () => {

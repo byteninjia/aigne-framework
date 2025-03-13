@@ -4,7 +4,7 @@ import {
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core";
+} from "@aigne/core-next";
 import { z } from "zod";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 

@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline/promises";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core";
+import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
 const model = new ChatModelOpenAI({

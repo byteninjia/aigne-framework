@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { join } from "node:path";
-import { MCPAgent } from "@aigne/core";
+import { MCPAgent } from "@aigne/core-next";
 
 test(
   "MCPAgent from command",

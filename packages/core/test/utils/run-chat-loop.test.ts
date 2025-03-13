@@ -1,5 +1,5 @@
 import { expect, mock, spyOn, test } from "bun:test";
-import { AIAgent, ExecutionEngine, runChatLoopInTerminal, userInput } from "@aigne/core";
+import { AIAgent, ExecutionEngine, runChatLoopInTerminal, userInput } from "@aigne/core-next";
 import inquirer from "inquirer";
 
 test("runChatLoopInTerminal should respond /help /exit commands", async () => {
