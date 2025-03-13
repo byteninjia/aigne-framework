@@ -204,6 +204,36 @@ test("PromptBuilder from MCP prompt result", async () => {
         },
       },
       {
+        role: "user",
+        content: {
+          type: "resource",
+          resource: {
+            uri: "echo://Hello",
+            blob: Buffer.from("Resource echo: Hello").toString("base64"),
+            mimeType: "text/plain",
+          },
+        },
+      },
+      {
+        role: "user",
+        content: {
+          type: "resource",
+          resource: {
+            uri: "test://image-resource",
+            blob: Buffer.from("FAKE IMAGE FROM RESOURCE").toString("base64"),
+            mimeType: "image/png",
+          },
+        },
+      },
+      {
+        role: "user",
+        content: {
+          type: "image",
+          mimeType: "image/png",
+          data: Buffer.from("FAKE IMAGE").toString("base64"),
+        },
+      },
+      {
         role: "assistant",
         content: {
           type: "text",
@@ -220,6 +250,20 @@ test("PromptBuilder from MCP prompt result", async () => {
         {
           role: "user",
           content: "Hello",
+        },
+        {
+          role: "user",
+          content: "Resource echo: Hello",
+        },
+        {
+          role: "user",
+          content: [
+            { type: "image_url", url: Buffer.from("FAKE IMAGE FROM RESOURCE").toString("base64") },
+          ],
+        },
+        {
+          role: "user",
+          content: [{ type: "image_url", url: Buffer.from("FAKE IMAGE").toString("base64") }],
         },
         {
           role: "agent",

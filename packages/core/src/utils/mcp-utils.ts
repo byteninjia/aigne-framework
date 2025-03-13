@@ -1,8 +1,14 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { ListPromptsResult, ListToolsResult } from "@modelcontextprotocol/sdk/types";
+import { UriTemplate } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type {
+  ListPromptsResult,
+  ListResourceTemplatesResult,
+  ListResourcesResult,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types";
 import { type JsonSchema, jsonSchemaToZod } from "@n8n/json-schema-to-zod";
 import { type ZodObject, type ZodType, z } from "zod";
-import { MCPPrompt, MCPTool } from "../agents/mcp-agent";
+import { MCPPrompt, MCPResource, MCPTool } from "../agents/mcp-agent";
 
 export function toolFromMCPTool(client: Client, tool: ListToolsResult["tools"][number]) {
   return new MCPTool({
@@ -43,4 +49,42 @@ export function promptFromMCPPrompt(client: Client, prompt: ListPromptsResult["p
       })
       .passthrough(),
   });
+}
+
+export function resourceFromMCPResource(
+  client: Client,
+  resource:
+    | ListResourcesResult["resources"][number]
+    | ListResourceTemplatesResult["resourceTemplates"][number],
+) {
+  const [uri, variables] = isResourceTemplate(resource)
+    ? [
+        resource.uriTemplate,
+        // TODO: use template.variableNames when it's available https://github.com/modelcontextprotocol/typescript-sdk/pull/188
+        (
+          new UriTemplate(resource.uriTemplate) as unknown as {
+            parts: (string | { names: string[] })[];
+          }
+        ).parts.flatMap((i) => (typeof i === "object" ? i.names : [])),
+      ]
+    : [resource.uri, []];
+
+  return new MCPResource({
+    client,
+    name: resource.name,
+    uri,
+    description: resource.description,
+    inputSchema: z
+      .object(Object.fromEntries(variables.map((i) => [i, z.string().optional()])))
+      .passthrough(),
+    outputSchema: z.object({ contents: z.array(z.record(z.unknown())) }).passthrough(),
+  });
+}
+
+function isResourceTemplate(
+  resource:
+    | ListResourcesResult["resources"][number]
+    | ListResourceTemplatesResult["resourceTemplates"][number],
+): resource is ListResourceTemplatesResult["resourceTemplates"][number] {
+  return typeof resource.uriTemplate === "string";
 }

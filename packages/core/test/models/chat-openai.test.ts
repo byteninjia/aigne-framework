@@ -36,7 +36,7 @@ test("ChatModelOpenAI.run", async () => {
     messages: ChatMessagesTemplate.from([
       SystemMessageTemplate.from("You are a chatbot"),
       UserMessageTemplate.from([{ type: "text", text: "What is the weather in New York?" }]),
-      AgentMessageTemplate.from([
+      AgentMessageTemplate.from(undefined, [
         {
           id: "get_weather",
           type: "function",

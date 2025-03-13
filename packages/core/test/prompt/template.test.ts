@@ -22,7 +22,9 @@ test("PromptTemplate.format with json variable", async () => {
 });
 
 test("AgentMessageTemplate", async () => {
-  const prompt = AgentMessageTemplate.from("Hello, {{name}}!", "AgentA").format({ name: "Alice" });
+  const prompt = AgentMessageTemplate.from("Hello, {{name}}!", undefined, "AgentA").format({
+    name: "Alice",
+  });
   expect(prompt).toEqual({
     role: "agent",
     content: "Hello, Alice!",
@@ -31,6 +33,7 @@ test("AgentMessageTemplate", async () => {
   });
 
   const toolCallsPrompt = AgentMessageTemplate.from(
+    undefined,
     [
       {
         id: "tool1",

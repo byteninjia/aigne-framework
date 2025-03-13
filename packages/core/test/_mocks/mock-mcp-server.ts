@@ -33,6 +33,17 @@ server.prompt("echo", { message: z.string() }, ({ message }) => ({
         text: `Please process this message: ${message}`,
       },
     },
+    {
+      role: "user",
+      content: {
+        type: "resource",
+        resource: {
+          uri: `echo://${message}`,
+          blob: Buffer.from(`Resource echo: ${message}`).toString("base64"),
+          mimeType: "text/plain",
+        },
+      },
+    },
   ],
 }));
 

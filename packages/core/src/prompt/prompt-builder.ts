@@ -94,11 +94,29 @@ export class PromptBuilder {
     return new PromptBuilder({
       instructions: ChatMessagesTemplate.from(
         result.messages.map((i) => {
-          if (i.content.type !== "text")
-            throw new Error(`Unsupported content type ${i.content.type}`);
+          let content: ChatModelInputMessage["content"] | undefined;
 
-          if (i.role === "user") return UserMessageTemplate.from(i.content.text);
-          if (i.role === "assistant") return AgentMessageTemplate.from(i.content.text);
+          if (i.content.type === "text") content = i.content.text;
+          else if (i.content.type === "resource") {
+            const { mimeType, blob } = i.content.resource;
+            if (typeof blob !== "string")
+              throw new Error(`Unsupported resource blob type ${typeof blob}`);
+
+            if (!mimeType || mimeType === "text/plain") {
+              content = Buffer.from(blob, "base64").toString("utf-8");
+            } else if (/image\/.*/.test(mimeType)) {
+              content = [{ type: "image_url", url: blob }];
+            } else {
+              throw new Error(`Unsupported resource mimeType ${mimeType}`);
+            }
+          } else if (i.content.type === "image") {
+            content = [{ type: "image_url", url: i.content.data }];
+          }
+
+          if (!content) throw new Error(`Unsupported content type ${i.content.type}`);
+
+          if (i.role === "user") return UserMessageTemplate.from(content);
+          if (i.role === "assistant") return AgentMessageTemplate.from(content);
 
           throw new Error(`Unsupported role ${i.role}`);
         }),

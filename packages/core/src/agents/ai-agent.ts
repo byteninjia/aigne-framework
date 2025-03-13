@@ -112,7 +112,10 @@ export class AIAgent<
         // Continue LLM function calling loop if any tools were executed
         if (executedToolCalls.length) {
           toolCallMessages.push(
-            AgentMessageTemplate.from(executedToolCalls.map(({ call }) => call)).format(),
+            AgentMessageTemplate.from(
+              undefined,
+              executedToolCalls.map(({ call }) => call),
+            ).format(),
             ...executedToolCalls.map(({ call, output }) =>
               ToolMessageTemplate.from(output, call.id).format(),
             ),

@@ -57,14 +57,16 @@ export class UserMessageTemplate extends ChatMessageTemplate {
 }
 
 export class AgentMessageTemplate extends ChatMessageTemplate {
-  static from(template: string | ChatModelOutputToolCall[], name?: string) {
-    return typeof template === "string"
-      ? new AgentMessageTemplate(template, undefined, name)
-      : new AgentMessageTemplate(undefined, template, name);
+  static from(
+    template?: ChatModelInputMessage["content"],
+    toolCalls?: ChatModelOutputToolCall[],
+    name?: string,
+  ) {
+    return new AgentMessageTemplate(template, toolCalls, name);
   }
 
   constructor(
-    content?: string,
+    content?: ChatModelInputMessage["content"],
     public toolCalls?: ChatModelOutputToolCall[],
     name?: string,
   ) {
@@ -171,7 +173,7 @@ export function parseChatMessages(messages: unknown): ChatMessageTemplate[] | un
       case "user":
         return UserMessageTemplate.from(message.content, message.name);
       case "agent":
-        return new AgentMessageTemplate(message.content, message.toolCalls, message.name);
+        return AgentMessageTemplate.from(message.content, message.toolCalls, message.name);
       case "tool":
         return ToolMessageTemplate.from(message.content, message.toolCallId, message.name);
     }

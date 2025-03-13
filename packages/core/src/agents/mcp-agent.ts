@@ -5,10 +5,15 @@ import {
   type StdioServerParameters,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { CallToolResult, GetPromptResult } from "@modelcontextprotocol/sdk/types";
+import { UriTemplate } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type {
+  CallToolResult,
+  GetPromptResult,
+  ReadResourceResult,
+} from "@modelcontextprotocol/sdk/types";
 import {} from "zod";
 import { logger } from "../utils/logger";
-import { promptFromMCPPrompt, toolFromMCPTool } from "../utils/mcp-utils";
+import { promptFromMCPPrompt, resourceFromMCPResource, toolFromMCPTool } from "../utils/mcp-utils";
 import { createAccessorArray } from "../utils/type-utils";
 import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent";
 
@@ -21,6 +26,8 @@ export interface MCPAgentOptions extends AgentOptions {
   client: Client;
 
   prompts?: MCPPrompt[];
+
+  resources?: MCPResource[];
 }
 
 export type MCPServerOptions = SSEServerParameters | StdioServerParameters;
@@ -68,8 +75,11 @@ export class MCPAgent extends Agent {
 
     const mcpServer = getMCPServerName(client);
 
-    const { tools: isToolsAvailable, prompts: isPromptsAvailable } =
-      client.getServerCapabilities() ?? {};
+    const {
+      tools: isToolsAvailable,
+      prompts: isPromptsAvailable,
+      resources: isResourcesAvailable,
+    } = client.getServerCapabilities() ?? {};
 
     const tools = isToolsAvailable
       ? await debug
@@ -87,7 +97,22 @@ export class MCPAgent extends Agent {
           .then(({ prompts }) => prompts.map((prompt) => promptFromMCPPrompt(client, prompt)))
       : undefined;
 
-    return new MCPAgent({ client, tools, prompts });
+    const resources = isResourcesAvailable
+      ? await debug
+          .spinner(
+            Promise.all([client.listResources(), client.listResourceTemplates()]),
+            `Listing resources from ${mcpServer}`,
+            ([{ resources }, { resourceTemplates }]) =>
+              debug("%O\n%O", resources, resourceTemplates),
+          )
+          .then(([{ resources }, { resourceTemplates }]) =>
+            [...resources, ...resourceTemplates].map((resource) =>
+              resourceFromMCPResource(client, resource),
+            ),
+          )
+      : undefined;
+
+    return new MCPAgent({ client, tools, prompts, resources });
   }
 
   constructor(options: MCPAgentOptions) {
@@ -95,11 +120,16 @@ export class MCPAgent extends Agent {
 
     this.client = options.client;
     if (options.prompts?.length) this.prompts.push(...options.prompts);
+    if (options.resources?.length) this.resources.push(...options.resources);
   }
 
   private client: Client;
 
   readonly prompts = createAccessorArray<MCPPrompt>([], (arr, name) =>
+    arr.find((i) => i.name === name),
+  );
+
+  readonly resources = createAccessorArray<MCPResource>([], (arr, name) =>
     arr.find((i) => i.name === name),
   );
 
@@ -147,7 +177,33 @@ export class MCPPrompt extends MCPBase<{ [key: string]: string }, GetPromptResul
       (output) => debug("input: %O\noutput: %O", input, output),
     );
 
-    return result as GetPromptResult;
+    return result;
+  }
+}
+
+export interface MCPResourceOptions
+  extends MCPToolBaseOptions<{ [key: string]: never }, ReadResourceResult> {
+  uri: string;
+}
+
+export class MCPResource extends MCPBase<{ [key: string]: string }, ReadResourceResult> {
+  constructor(options: MCPResourceOptions) {
+    super(options);
+    this.uri = options.uri;
+  }
+
+  uri: string;
+
+  async process(input: { [key: string]: string }): Promise<ReadResourceResult> {
+    const uri = new UriTemplate(this.uri).expand(input);
+
+    const result = await debug.spinner(
+      this.client.readResource({ uri }),
+      `Read resource ${this.name} from ${this.mcpServer}`,
+      (output) => debug("input: %O\noutput: %O", input, output),
+    );
+
+    return result;
   }
 }
 
