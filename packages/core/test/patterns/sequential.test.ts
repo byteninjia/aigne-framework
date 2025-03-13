@@ -54,19 +54,12 @@ Draft copy:
 
   const engine = new ExecutionEngine({ model });
 
-  const runSequential = spyOn(
-    engine as unknown as { runSequential: () => unknown },
-    "runSequential",
-  );
-
   const result = await engine.run(
     { product: "AIGNE is a No-code Generative AI Apps Engine" },
     conceptExtractor,
     writer,
     formatProof,
   );
-
-  expect(runSequential).toHaveBeenCalledTimes(1);
 
   expect(result).toEqual({
     concept: mockModelResults[0].text,

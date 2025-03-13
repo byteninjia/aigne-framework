@@ -1,9 +1,9 @@
 {
-  "name": "@aigne/example-mcp-server-sqlite",
+  "name": "@aigne/example-workflow-sequential",
   "version": "1.1.0-beta.11",
-  "description": "A demonstration of using AIGNE Framework and Sqlite MCP Server to interact with a SQLite database",
+  "description": "A demonstration of using AIGNE Framework to build a sequential workflow",
   "author": "Arcblock <blocklet@arcblock.io> https://github.com/blocklet",
-  "homepage": "https://github.com/AIGNE-io/aigne-framework/tree/main/examples/mcp-server-sqlite",
+  "homepage": "https://github.com/AIGNE-io/aigne-framework/tree/main/examples/workflow-sequential",
   "license": "ISC",
   "repository": {
     "type": "git",

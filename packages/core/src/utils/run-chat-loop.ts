@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-import type { Agent, AgentInput, AgentOutput } from "../agents/agent";
+import type { AgentInput, AgentOutput } from "../agents/agent";
 import type { UserAgent } from "../execution-engine";
 import { logger } from "./logger";
 
@@ -9,6 +9,7 @@ export interface ChatLoopOptions {
   welcome?: string;
   defaultQuestion?: string;
   onResponse?: (response: AgentOutput) => void;
+  inputKey?: string;
 }
 
 export async function runChatLoopInTerminal(
@@ -45,11 +46,17 @@ export async function runChatLoopInTerminal(
 }
 
 async function callAgent(
-  agent: Agent,
+  agent: UserAgent,
   input: AgentInput | string,
-  options: Pick<ChatLoopOptions, "onResponse"> & Required<Pick<ChatLoopOptions, "log">>,
+  options: Pick<ChatLoopOptions, "onResponse" | "inputKey"> &
+    Required<Pick<ChatLoopOptions, "log">>,
 ) {
-  const response = await logger.spinner(agent.call(input), "🤖");
+  const response = await logger.spinner(
+    agent.call(
+      options.inputKey && typeof input === "string" ? { [options.inputKey]: input } : input,
+    ),
+    "🤖",
+  );
   if (options?.onResponse) options.onResponse(response);
   else options.log(response);
 }

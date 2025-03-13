@@ -5,6 +5,10 @@ export function isNonNullable<T>(value: T): value is NonNullable<T> {
   return !isNil(value);
 }
 
+export function isNotEmpty<T>(arr: T[]): arr is [T, ...T[]] {
+  return arr.length > 0;
+}
+
 export function orArrayToArray<T>(value?: T | T[]): T[] {
   if (isNil(value)) return [];
   return Array.isArray(value) ? value : [value];

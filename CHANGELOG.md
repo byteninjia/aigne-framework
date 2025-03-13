@@ -1,3 +1,8 @@
+## 1.1.0-beta.11 (2025-3-14)
+
+- feat(core): add sequential and parallel helper function
+- chore(examples): add workflow-sequential example
+
 ## 1.1.0-beta.10 (2025-3-13)
 
 - chore: ensure required environment variables have values

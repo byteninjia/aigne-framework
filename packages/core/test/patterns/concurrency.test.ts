@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, ChatModelOpenAI, ExecutionEngine, parallel } from "@aigne/core-next";
 
 test("Patterns - Concurrency", async () => {
   const model = new ChatModelOpenAI();
@@ -42,16 +42,10 @@ Product description:
     return {};
   });
 
-  const runParallel = spyOn(engine as unknown as { runParallel: () => unknown }, "runParallel");
-
   const result = await engine.run(
     { product: "AIGNE is a No-code Generative AI Apps Engine" },
-    { concurrency: true },
-    featureExtractor,
-    audienceAnalyzer,
+    parallel(featureExtractor, audienceAnalyzer),
   );
-
-  expect(runParallel).toHaveBeenCalledTimes(1);
 
   expect(result).toEqual({
     features: "Extracted features: AIGNE is a No-code Generative AI Apps Engine",

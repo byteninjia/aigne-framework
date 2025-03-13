@@ -1,10 +1,16 @@
 import EventEmitter from "node:events";
 import { nanoid } from "nanoid";
-import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "../agents/agent";
+import {
+  Agent,
+  type AgentInput,
+  type AgentOptions,
+  type AgentOutput,
+  type FunctionAgentFn,
+} from "../agents/agent";
 import { isTransferAgentOutput, transferAgentOutputKey } from "../agents/types";
 import type { ChatModel } from "../models/chat";
 import { addMessagesToInput, userInput } from "../prompt/prompt-builder";
-import { orArrayToArray } from "../utils/type-utils";
+import { isNotEmpty, orArrayToArray } from "../utils/type-utils";
 import type { Context } from "./context";
 import { MessageQueue, UserInputTopic, UserOutputTopic } from "./message-queue";
 
@@ -12,10 +18,6 @@ export interface ExecutionEngineOptions {
   model?: ChatModel;
   tools?: Agent[];
   agents?: Agent[];
-}
-
-export interface ExecutionEngineRunOptions {
-  concurrency?: boolean;
 }
 
 export class ExecutionEngine extends EventEmitter implements Context {
@@ -51,7 +53,7 @@ export class ExecutionEngine extends EventEmitter implements Context {
     for (const topic of orArrayToArray(agent.subscribeTopic)) {
       const listener = async (input: AgentInput) => {
         try {
-          const { output } = await this.callAgent(input, agent);
+          const { output } = await this.runAgent(input, agent);
 
           const topics =
             typeof agent.publishTopic === "function"
@@ -84,74 +86,52 @@ export class ExecutionEngine extends EventEmitter implements Context {
     this.messageQueue.off(topic, listener);
   }
 
-  async run(agent: Agent): Promise<UserAgent>;
-  async run(input: AgentInput | string): Promise<AgentOutput>;
-  async run(input: AgentInput | string, ...agents: Agent[]): Promise<AgentOutput>;
+  run(...agents: [Runnable, ...Runnable[]]): Promise<UserAgent>;
+  run(input: AgentInput | string): Promise<AgentOutput>;
+  run(input: AgentInput | string, ...agents: [Runnable, ...Runnable[]]): Promise<AgentOutput>;
+  run(
+    input: AgentInput | string | Runnable,
+    ...agents: Runnable[]
+  ): Promise<UserAgent | AgentOutput>;
   async run(
-    input: AgentInput | string,
-    options: ExecutionEngineRunOptions,
-    ...agents: Agent[]
-  ): Promise<AgentOutput>;
-  async run(
-    _input: AgentInput | string | Agent,
-    _options?: ExecutionEngineRunOptions | Agent,
-    ..._agents: Agent[]
-  ) {
-    if (_input instanceof Agent) return this.runChatLoop(_input);
+    _input: AgentInput | string | Runnable,
+    ..._agents: Runnable[]
+  ): Promise<UserAgent | AgentOutput> {
+    const [input, agents] = this.splitInputAndAgents(_input, ..._agents);
 
-    const [options, agents] = this.splitOptionsAndAgents(_options, ..._agents);
-
-    const input = typeof _input === "string" ? userInput(_input) : _input;
-
-    if (agents.length === 0) return this.publishUserInputTopic(input);
-
-    if (options?.concurrency) return this.runParallel(input, ...agents);
-
-    return this.runSequential(input, ...agents);
-  }
-
-  private splitOptionsAndAgents(
-    options?: ExecutionEngineRunOptions | Agent,
-    ...agents: Agent[]
-  ): [ExecutionEngineRunOptions | undefined, Agent[]] {
-    if (options instanceof Agent) {
-      return [{}, [options, ...agents]];
+    if (input) {
+      return isNotEmpty(agents)
+        ? this.runAgent(input, sequential(...agents)).then((res) => res.output)
+        : this.publishUserInputTopic(input);
     }
 
-    return [options, agents];
+    if (!isNotEmpty(agents)) throw new Error("No agents to run");
+    return this.runChatLoop(sequential(...agents));
   }
 
-  private async runSequential(input: AgentInput, ...agents: Agent[]): Promise<AgentOutput> {
-    const output: AgentOutput = {};
-
-    for (const agent of agents.flat()) {
-      const { output: o } = await this.callAgent({ ...input, ...output }, agent);
-      Object.assign(output, o);
+  private splitInputAndAgents(
+    input?: AgentInput | string | Runnable,
+    ...agents: Runnable[]
+  ): [AgentInput | undefined, Runnable[]] {
+    if (input instanceof Agent || typeof input === "function") {
+      return [undefined, [input, ...agents]];
     }
 
-    return output;
+    return [typeof input === "string" ? userInput(input) : input, agents];
   }
 
-  private async runParallel(input: AgentInput, ...agents: Agent[]): Promise<AgentOutput> {
-    const outputs = await Promise.all(
-      agents.map((agent) => this.callAgent(input, agent).then((res) => res.output)),
-    );
-
-    return Object.assign({}, ...outputs);
-  }
-
-  private async publishUserInputTopic(input: AgentInput) {
+  private async publishUserInputTopic(input: AgentInput): Promise<AgentOutput> {
     this.publish(UserInputTopic, input);
 
     // TODO: 处理超时、错误、无限循环、饿死等情况
-    const result = await new Promise((resolve) => {
-      this.messageQueue.on(UserOutputTopic, (result) => resolve(result));
+    const result = await new Promise<AgentOutput>((resolve) => {
+      this.messageQueue.on(UserOutputTopic, resolve);
     });
 
     return result;
   }
 
-  private async runChatLoop(agent: Agent) {
+  private async runChatLoop(agent: Runnable) {
     type S = { input: AgentInput; resolve: (output: AgentOutput) => void };
     const inputStream = new TransformStream<S, S>({});
 
@@ -177,9 +157,9 @@ export class ExecutionEngine extends EventEmitter implements Context {
 
         const { input, resolve } = value;
 
-        const { agent, output } = await this.callAgent(input, activeAgent);
+        const { agent, output } = await this.runAgent(input, activeAgent);
 
-        if (agent) activeAgent = agent;
+        activeAgent = agent;
 
         resolve(output);
       }
@@ -188,13 +168,28 @@ export class ExecutionEngine extends EventEmitter implements Context {
     return userAgent;
   }
 
-  private async callAgent(input: AgentInput, agent: Agent) {
+  async runAgent(input: AgentInput, agent: Runnable) {
     let activeAgent = agent;
     let output: AgentOutput | undefined;
 
     for (;;) {
-      output = await activeAgent.call(input, this);
-      if (isTransferAgentOutput(output)) {
+      const result =
+        typeof activeAgent === "function"
+          ? await activeAgent(input, this)
+          : await activeAgent.call(input, this);
+
+      if (!(result instanceof Agent)) output = result;
+
+      const transferToAgent =
+        result instanceof Agent
+          ? result
+          : isTransferAgentOutput(result)
+            ? result[transferAgentOutputKey].agent
+            : undefined;
+
+      if (transferToAgent) {
+        activeAgent = transferToAgent;
+
         // TODO: 不要修改原始对象，可能被外部丢弃
         const transferToolCallId = nanoid();
         Object.assign(
@@ -210,7 +205,7 @@ export class ExecutionEngine extends EventEmitter implements Context {
                   function: {
                     name: "transfer_to_agent",
                     arguments: {
-                      to: output[transferAgentOutputKey].agent.name,
+                      to: transferToAgent.name,
                     },
                   },
                 },
@@ -219,16 +214,16 @@ export class ExecutionEngine extends EventEmitter implements Context {
             {
               role: "tool",
               toolCallId: transferToolCallId,
-              content: `Transferred to ${output[transferAgentOutputKey].agent.name}. Adopt persona immediately.`,
+              content: `Transferred to ${transferToAgent.name}. Adopt persona immediately.`,
             },
           ]),
         );
-
-        activeAgent = output[transferAgentOutputKey].agent;
       } else {
         break;
       }
     }
+
+    if (!output) throw new Error("Unexpected empty output");
 
     return {
       agent: activeAgent,
@@ -252,6 +247,8 @@ export class ExecutionEngine extends EventEmitter implements Context {
   }
 }
 
+export type Runnable = Agent | FunctionAgentFn;
+
 export class UserAgent<
   I extends AgentInput = AgentInput,
   O extends AgentOutput = AgentOutput,
@@ -267,4 +264,46 @@ export class UserAgent<
   process(input: I): Promise<O> {
     return this.options.run(input);
   }
+}
+
+export function sequential(..._agents: [Runnable, ...Runnable[]]): FunctionAgentFn {
+  let agents = [..._agents];
+
+  return async (input: AgentInput, context?: Context) => {
+    if (!(context instanceof ExecutionEngine))
+      throw new Error("Context is required for parallel agents");
+
+    const output: AgentOutput = {};
+
+    // Clone the agents to run, so that we can update the agents list during the loop
+    const agentsToRun = [...agents];
+    agents = [];
+
+    for (const agent of agentsToRun) {
+      const { agent: transferToAgent, output: o } = await context.runAgent(
+        { ...input, ...output },
+        agent,
+      );
+      Object.assign(output, o);
+      agents.push(transferToAgent);
+    }
+
+    return output;
+  };
+}
+
+export function parallel(..._agents: [Runnable, ...Runnable[]]): FunctionAgentFn {
+  let agents = [..._agents];
+
+  return async (input: AgentInput, context?: Context) => {
+    if (!(context instanceof ExecutionEngine))
+      throw new Error("Context is required for parallel agents");
+
+    const result = await Promise.all(agents.map((agent) => context.runAgent(input, agent)));
+
+    agents = result.map((i) => i.agent);
+    const outputs = result.map((i) => i.output);
+
+    return Object.assign({}, ...outputs);
+  };
 }
