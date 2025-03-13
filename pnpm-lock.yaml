@@ -33,7 +33,7 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
-  examples/puppeteer-mcp-server:
+  examples/mcp-server-puppeteer:
     dependencies:
       '@aigne/core-next':
         specifier: workspace:^
@@ -42,7 +42,16 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
-  examples/sqlite-mcp-server:
+  examples/mcp-server-sqlite:
+    dependencies:
+      '@aigne/core-next':
+        specifier: workspace:^
+        version: link:../../packages/core
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+
+  examples/workflow-router:
     dependencies:
       '@aigne/core-next':
         specifier: workspace:^

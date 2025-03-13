@@ -1,3 +1,9 @@
+## 1.1.0-beta.8 (2025-3-13)
+
+- fix(AIAgent): should pass both arguments (model generated) and input (user input) to tool
+- chore(examples): add workflow-router example
+- chore(examples): rename examples puppeteer-mcp-server and sqlite-mcp-server to mcp-server-puppeteer and mcp-server-sqlite
+
 ## 1.1.0-beta.7 (2025-3-13)
 
 - chore: rename @aigne/core to @aigne/core-next

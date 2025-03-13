@@ -13,7 +13,7 @@ This is a demonstration of using [AIGNE Framework](https://github.com/AIGNE-io/a
 ```bash
 OPENAI_API_KEY=YOUR_OPENAI_API_KEY # setup your OpenAI API key
 
-npx -y @aigne/example-puppeteer-mcp-server # run the example
+npx -y @aigne/example-mcp-server-puppeteer # run the example
 ```
 
 ## Installation
@@ -27,7 +27,7 @@ git clone https://github.com/AIGNE-io/aigne-framework
 ### Install Dependencies
 
 ```bash
-cd aigne-framework/examples/puppeteer-mcp-server
+cd aigne-framework/examples/mcp-server-puppeteer
 
 pnpm install
 ```

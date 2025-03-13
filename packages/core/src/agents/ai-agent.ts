@@ -99,7 +99,8 @@ export class AIAgent<
           const tool = toolsMap.get(call.function.name);
           if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
 
-          const output = await tool.call(call.function.arguments, context);
+          // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
+          const output = await tool.call({ ...call.function.arguments, ...input }, context);
 
           // Save the TransferAgentOutput for later
           if (isTransferAgentOutput(output)) {

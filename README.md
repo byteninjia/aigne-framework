@@ -163,8 +163,9 @@ classDiagram
 
 ## Examples
 
-- [Puppeteer MCP Server](./examples/puppeteer-mcp-server) - Example project demonstrating how to use AIGNE Framework with Puppeteer MCP Server to scrape web page.
-- [SQLite MCP Server](./examples/sqlite-mcp-server) - Example project demonstrating how to use AIGNE Framework with SQLite MCP Server to interact with SQLite database.
+- [Puppeteer MCP Server](./examples/mcp-server-puppeteer) - Example project demonstrating how to use AIGNE Framework with Puppeteer MCP Server to scrape web page.
+- [SQLite MCP Server](./examples/mcp-server-sqlite) - Example project demonstrating how to use AIGNE Framework with SQLite MCP Server to interact with SQLite database.
+- [Workflow Router](./examples/workflow-router) - Example project demonstrating how to use AIGNE Framework to build a router workflow.
 
 ## Usage
 
