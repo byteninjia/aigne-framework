@@ -1,16 +1,21 @@
+#!/usr/bin/env npx -y bun
+
+import assert from "node:assert";
 import {
   AIAgent,
   ChatModelOpenAI,
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
+  runChatLoopInTerminal,
 } from "@aigne/core-next";
 import { z } from "zod";
-import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
+
+const { OPENAI_API_KEY } = process.env;
+assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");
 
 const model = new ChatModelOpenAI({
   apiKey: OPENAI_API_KEY,
-  model: DEFAULT_CHAT_MODEL,
 });
 
 const coder = AIAgent.from({
@@ -71,13 +76,11 @@ Please review the code. If previous feedback was provided, see if it was address
   includeInputInOutput: true,
 });
 
-const engine = new ExecutionEngine({
-  model,
-  agents: [coder, reviewer],
-});
+const engine = new ExecutionEngine({ model, agents: [coder, reviewer] });
 
-const result = await engine.run({
-  question: "Write a function to find the sum of all even numbers in a list.",
-});
+const userAgent = await engine.run();
 
-console.log(result);
+await runChatLoopInTerminal(userAgent, {
+  welcome: `Hello, I'm a coder with a reviewer. I can help you write code and get it reviewed.`,
+  defaultQuestion: "Write a function to find the sum of all even numbers in a list.",
+});

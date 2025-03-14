@@ -85,7 +85,7 @@ export class ExecutionEngine extends EventEmitter implements Context {
     this.messageQueue.off(topic, listener);
   }
 
-  run(...agents: [Runnable, ...Runnable[]]): Promise<UserAgent>;
+  run(...agents: Runnable[]): Promise<UserAgent>;
   run(input: AgentInput | string): Promise<AgentOutput>;
   run(input: AgentInput | string, ...agents: [Runnable, ...Runnable[]]): Promise<AgentOutput>;
   run(
@@ -104,8 +104,7 @@ export class ExecutionEngine extends EventEmitter implements Context {
         : this.publishUserInputTopic(input);
     }
 
-    if (!isNotEmpty(agents)) throw new Error("No agents to run");
-    return this.runChatLoop(sequential(...agents));
+    return this.runChatLoop(...agents);
   }
 
   private splitInputAndAgents(
@@ -130,7 +129,7 @@ export class ExecutionEngine extends EventEmitter implements Context {
     return result;
   }
 
-  private async runChatLoop(agent: Runnable) {
+  private async runChatLoop(...agents: Runnable[]) {
     type S = { input: AgentInput; resolve: (output: AgentOutput) => void };
     const inputStream = new TransformStream<S, S>({});
 
@@ -146,7 +145,9 @@ export class ExecutionEngine extends EventEmitter implements Context {
 
     // Run the loop in a separate async function, so that we can return the userAgent
     (async () => {
-      let activeAgent = agent;
+      let activeAgent: Runnable | undefined = isNotEmpty(agents)
+        ? sequential(...agents)
+        : undefined;
 
       const reader = inputStream.readable.getReader();
 
@@ -156,11 +157,14 @@ export class ExecutionEngine extends EventEmitter implements Context {
 
         const { input, resolve } = value;
 
-        const { agent, output } = await this.runAgent(input, activeAgent);
-
-        activeAgent = agent;
-
-        resolve(output);
+        if (activeAgent) {
+          const { agent, output } = await this.runAgent(input, activeAgent);
+          activeAgent = agent;
+          resolve(output);
+        } else {
+          const output = await this.publishUserInputTopic(input);
+          resolve(output);
+        }
       }
     })();
 

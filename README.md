@@ -169,6 +169,7 @@ classDiagram
 - [Workflow Sequential](./examples/workflow-sequential) - Example project demonstrating how to use AIGNE Framework to build a sequential workflow.
 - [Workflow Concurrency](./examples/workflow-concurrency) - Example project demonstrating how to use AIGNE Framework to build a concurrency workflow.
 - [Workflow Handoff](./examples/workflow-handoff) - Example project demonstrating how to use AIGNE Framework to build a handoff workflow.
+- [Workflow Reflection](./examples/workflow-reflection) - Example project demonstrating how to use AIGNE Framework to build a reflection workflow.
 
 ## Usage
 

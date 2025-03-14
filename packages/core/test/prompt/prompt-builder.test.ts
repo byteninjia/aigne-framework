@@ -1,16 +1,16 @@
 import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { FunctionAgent } from "@aigne/core-next";
-import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
-import { z } from "zod";
-import { AIAgent } from "../../src/agents/ai-agent";
 import {
+  AIAgent,
+  FunctionAgent,
   PromptBuilder,
   USER_INPUT_MESSAGE_KEY,
   addMessagesToInput,
   userInput,
-} from "../../src/prompt/prompt-builder";
+} from "@aigne/core-next";
+import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
+import { z } from "zod";
 
 test("userInput function should return correct object", () => {
   const message = "Hello";
