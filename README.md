@@ -168,6 +168,7 @@ classDiagram
 - [Workflow Router](./examples/workflow-router) - Example project demonstrating how to use AIGNE Framework to build a router workflow.
 - [Workflow Sequential](./examples/workflow-sequential) - Example project demonstrating how to use AIGNE Framework to build a sequential workflow.
 - [Workflow Concurrency](./examples/workflow-concurrency) - Example project demonstrating how to use AIGNE Framework to build a concurrency workflow.
+- [Workflow Handoff](./examples/workflow-handoff) - Example project demonstrating how to use AIGNE Framework to build a handoff workflow.
 
 ## Usage
 

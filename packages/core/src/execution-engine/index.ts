@@ -1,5 +1,4 @@
 import EventEmitter from "node:events";
-import { nanoid } from "nanoid";
 import {
   Agent,
   type AgentInput,
@@ -188,36 +187,19 @@ export class ExecutionEngine extends EventEmitter implements Context {
             : undefined;
 
       if (transferToAgent) {
-        activeAgent = transferToAgent;
-
         // TODO: 不要修改原始对象，可能被外部丢弃
-        const transferToolCallId = nanoid();
         Object.assign(
           input,
           addMessagesToInput(input, [
             {
               role: "agent",
-              name: agent.name,
-              toolCalls: [
-                {
-                  id: transferToolCallId,
-                  type: "function",
-                  function: {
-                    name: "transfer_to_agent",
-                    arguments: {
-                      to: transferToAgent.name,
-                    },
-                  },
-                },
-              ],
-            },
-            {
-              role: "tool",
-              toolCallId: transferToolCallId,
+              name: activeAgent.name,
               content: `Transferred to ${transferToAgent.name}. Adopt persona immediately.`,
             },
           ]),
         );
+
+        activeAgent = transferToAgent;
       } else {
         break;
       }

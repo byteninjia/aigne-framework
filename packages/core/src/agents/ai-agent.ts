@@ -139,9 +139,13 @@ export class AIAgent<
       const result = {} as O;
 
       if (json) {
-        this.instructions.addHistory(AgentMessageTemplate.from(JSON.stringify(json)).format());
+        this.instructions.addHistory(
+          AgentMessageTemplate.from(JSON.stringify(json), undefined, this.name).format(),
+        );
       } else if (text) {
-        this.instructions.addHistory(AgentMessageTemplate.from(text).format());
+        this.instructions.addHistory(
+          AgentMessageTemplate.from(text, undefined, this.name).format(),
+        );
       }
 
       if (modelInput.responseFormat?.type === "json_schema") {

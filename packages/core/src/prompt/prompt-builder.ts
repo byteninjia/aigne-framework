@@ -40,7 +40,7 @@ export function addMessagesToInput(
     newMessages.push({ role: "user", content: originalUserInputMessages });
   } else {
     const messages = parseChatMessages(originalUserInputMessages);
-    if (messages) newMessages.push(...messages);
+    if (messages) newMessages.push(...messages.map((i) => i.format()));
     else
       newMessages.push({
         role: "user",
