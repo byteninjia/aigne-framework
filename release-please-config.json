@@ -1,25 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
   "packages": {
-    ".": {
-      "changelog-path": "CHANGELOG.md",
-      "release-type": "node"
-    },
-    "packages/agent-library": {
-      "changelog-path": "CHANGELOG.md",
-      "release-type": "node"
-    },
-    "packages/core": {
-      "changelog-path": "CHANGELOG.md",
-      "release-type": "node"
-    },
-    "packages/utils": {
-      "changelog-path": "CHANGELOG.md",
-      "release-type": "node"
-    },
-    "packages/types": {
-      "changelog-path": "CHANGELOG.md",
-      "release-type": "node"
-    }
+    ".": {},
+    "packages/agent-library": {},
+    "packages/core": {},
+    "examples/mcp-server-puppeteer": {},
+    "examples/mcp-server-sqlite": {},
+    "examples/workflow-code-execution": {},
+    "examples/workflow-concurrency": {},
+    "examples/workflow-handoff": {},
+    "examples/workflow-orchestrator": {},
+    "examples/workflow-reflection": {},
+    "examples/workflow-router": {},
+    "examples/workflow-sequential": {}
   }
 }
