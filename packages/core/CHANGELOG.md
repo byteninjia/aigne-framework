@@ -1,3 +1,8 @@
+
+## [1.2.0](https://github.com/AIGNE-io/aigne-framework/compare/core-next-v1.1.0...core-next-v1.2.0) (2025-03-18)
+
+- chore: release v1.2.0
+
 ## 1.1.0-beta.17 (2025-3-18)
 
 - chore: add support for esm module
