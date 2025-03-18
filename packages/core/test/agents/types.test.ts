@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
-import { FunctionAgent } from "@aigne/core-next";
 import {
+  FunctionAgent,
   isTransferAgentOutput,
   transferAgentOutputKey,
   transferToAgentOutput,
-} from "../../src/agents/types";
+} from "@aigne/core-next";
 
 test("transferToAgentOutput", async () => {
   const agent = FunctionAgent.from(({ a, b }: { a: number; b: number }) => ({ sum: a + b }));

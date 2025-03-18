@@ -15,6 +15,8 @@ import {
 
 const DEFAULT_MAX_ITERATIONS = 30;
 
+export * from "./orchestrator-prompts.js";
+
 export interface StepResult {
   step: Step;
   task_results: Array<TaskWithResult>;

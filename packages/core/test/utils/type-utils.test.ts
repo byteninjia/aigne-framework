@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { get, isNonNullable, orArrayToArray } from "../../src/utils/type-utils";
+import { get, isNonNullable, orArrayToArray } from "../../src/utils/type-utils.js";
 
 test("type-utils.isNonNullable", async () => {
   expect([null, undefined, 0].filter(isNonNullable)).toEqual([0]);

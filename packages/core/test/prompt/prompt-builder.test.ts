@@ -9,7 +9,7 @@ import {
   addMessagesToInput,
   userInput,
 } from "@aigne/core-next";
-import type { GetPromptResult } from "@modelcontextprotocol/sdk/types";
+import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
 test("userInput function should return correct object", () => {

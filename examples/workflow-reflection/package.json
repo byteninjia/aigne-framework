@@ -12,7 +12,8 @@
   "bin": "index.ts",
   "files": [".env.local.example", "*.ts", "README.md"],
   "scripts": {
-    "start": "npx -y bun run index.ts"
+    "start": "npx -y bun run index.ts",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@aigne/core-next": "workspace:^",

@@ -32,8 +32,7 @@
     }
   },
   "scripts": {
-    "lint": "biome check",
-    "lint:fix": "biome check --write",
+    "lint": "tsc --noEmit",
     "build": "tsc --build scripts/tsconfig.build.json",
     "clean": "rimraf lib coverage",
     "prepublishOnly": "run-s clean build",
