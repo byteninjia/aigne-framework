@@ -237,6 +237,10 @@ class sandbox processing
 - [Workflow Orchestration](./examples/workflow-orchestration) - Coordinate multiple agents working together in sophisticated processing pipelines.
 - [Workflow Code Execution](./examples/workflow-code-execution) - Safely execute dynamically generated code within AI-driven workflows.
 
+## Contributing and Releasing
+
+AIGNE Framework uses [release-please](https://github.com/googleapis/release-please) for version management and release automation. For details on the release process and contributing guidelines, please see [RELEASING.md](./RELEASING.md) and [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Community and Support
 
 AIGNE Framework has a vibrant developer community offering various support channels:

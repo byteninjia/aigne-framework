@@ -1,7 +1,4 @@
-name: Publish
-
-env:
-  NODE_OPTIONS: "--max_old_space_size=6144"
+name: Release Please
 
 on:
   push:
@@ -9,42 +6,51 @@ on:
       - main
 
 jobs:
-  publish:
+  release-please:
     runs-on: ubuntu-latest
-
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
-
     steps:
-      - name: Checkout repo
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+
+      - name: Checkout
         uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
 
       - uses: pnpm/action-setup@v3
+        if: ${{ steps.release.outputs.release_created }}
         with:
-          version: 9
+          version: 10
 
       - name: Setup node
         uses: actions/setup-node@v4
+        if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: 20
           cache: pnpm
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
         run: pnpm install
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Lint
         run: pnpm lint
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Test
         run: pnpm test:coverage
+        if: ${{ steps.release.outputs.release_created }}
 
       - uses: codecov/codecov-action@v5
+        if: ${{ steps.release.outputs.release_created }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Publish to NPM
+        if: ${{ steps.release.outputs.release_created }}
         run: |
           npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
           pnpm -F "@aigne/*" publish --access public --no-git-checks

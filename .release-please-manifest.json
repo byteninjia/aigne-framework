@@ -1,0 +1,7 @@
+{
+  ".": "1.1.0-beta.17",
+  "packages/agent-library": "1.1.0-beta.17",
+  "packages/core": "1.1.0-beta.17",
+  "packages/utils": "1.1.0-beta.17",
+  "packages/types": "1.1.0-beta.17"
+}

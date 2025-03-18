@@ -252,6 +252,10 @@ Coder ->> User: 10!（10的阶乘）的值是 3,628,800。
 - [Workflow Orchestration](./examples/workflow-orchestration) - 协调多个代理在复杂处理管道中共同工作。
 - [Workflow Code Execution](./examples/workflow-code-execution) - 在 AI 驱动的工作流中安全执行动态生成的代码。
 
+## 贡献与发布
+
+AIGNE Framework 使用 [release-please](https://github.com/googleapis/release-please) 进行版本管理和发布自动化。有关发布流程和贡献指南的详细信息，请参阅 [RELEASING.zh.md](./RELEASING.zh.md) 和 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+
 ## 社区与支持
 
 AIGNE Framework 拥有活跃的开发者社区，提供多种支持渠道：

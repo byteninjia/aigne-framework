@@ -16,7 +16,6 @@
     "build": "pnpm build:libs",
     "clean": "pnpm -r run clean",
     "build:libs": "pnpm -F @aigne/* build",
-    "bump-version": "zx scripts/bump-version.mjs",
     "update:deps": "npx -y taze latest -r -w && pnpm install && pnpm dedupe",
     "test": "pnpm -r run test",
     "test:coverage": "pnpm -r run test:coverage",
@@ -24,7 +23,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "bumpp": "^10.1.0",
     "simple-git-hooks": "^2.11.1",
     "typescript": "^5.8.2",
     "zx": "^8.4.1"
