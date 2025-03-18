@@ -170,6 +170,8 @@ classDiagram
 - [Workflow Concurrency](./examples/workflow-concurrency) - Example project demonstrating how to use AIGNE Framework to build a concurrency workflow.
 - [Workflow Handoff](./examples/workflow-handoff) - Example project demonstrating how to use AIGNE Framework to build a handoff workflow.
 - [Workflow Reflection](./examples/workflow-reflection) - Example project demonstrating how to use AIGNE Framework to build a reflection workflow.
+- [Workflow Orchestration](./examples/workflow-orchestration) - Example project demonstrating how to use AIGNE Framework to build an orchestration workflow.
+- [Workflow Code Execution](./examples/workflow-code-execution) - Example project demonstrating how to use AIGNE Framework to build a code-execution workflow.
 
 ## Usage
 
