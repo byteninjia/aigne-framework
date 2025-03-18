@@ -35,5 +35,9 @@
       "biome check --write --no-errors-on-unmatched"
     ],
     "*": ["biome check --no-errors-on-unmatched --files-ignore-unknown=true"]
+  },
+  "engines": {
+    "node": ">=20.15",
+    "pnpm": ">=10.2.1"
   }
 }
