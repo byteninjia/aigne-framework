@@ -48,7 +48,7 @@ ChatModel can be used directly, but it's generally recommended to use it through
 **Example**:
 
 ```typescript
-import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core-next";
+import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core";
 
 // Initialize OpenAI model
 const openaiModel = new OpenAIChatModel({
@@ -110,7 +110,7 @@ const engine = new ExecutionEngine({ model });
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
 import { z } from "zod";
 
 // Create JavaScript sandbox
@@ -156,7 +156,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // Concept extractor Agent
 const conceptExtractor = AIAgent.from({
@@ -225,7 +225,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core";
 
 // Feature extraction Agent
 const featureExtractor = AIAgent.from({
@@ -277,7 +277,7 @@ import {
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 // Coder Agent
@@ -354,7 +354,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // Function to transfer to Agent B
 function transfer_to_b() {
@@ -403,7 +403,7 @@ console.log(result2);
 **Example**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // Product support Agent
 const productSupport = AIAgent.from({
@@ -480,7 +480,7 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 // Create specialized Agents
 const puppeteer = await MCPAgent.from({
@@ -590,7 +590,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // Create Puppeteer MCP Agent
 const puppeteerMCPAgent = await MCPAgent.from({
@@ -645,7 +645,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // Create SQLite MCP Agent
 const sqlite = await MCPAgent.from({

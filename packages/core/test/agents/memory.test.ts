@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { AgentMemory, ExecutionEngine, type Memory, createMessage } from "@aigne/core-next";
+import { AgentMemory, ExecutionEngine, type Memory, createMessage } from "@aigne/core";
 
 test("should add a new memory if it is not the same as the last one", () => {
   const agentMemory = new AgentMemory({});

@@ -109,7 +109,7 @@ The following example demonstrates how to interact with an SQLite database:
 ```typescript
 import assert from "node:assert";
 import { join } from "node:path";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

@@ -264,7 +264,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // Create AI model
 const model = new OpenAIChatModel({
@@ -328,7 +328,7 @@ The basic workflow for using Puppeteer MCP Agent to extract website content is a
 In addition to the Puppeteer MCP server, you can also use other MCP servers, such as the SQLite MCP server:
 
 ```typescript
-import { MCPAgent } from "@aigne/core-next";
+import { MCPAgent } from "@aigne/core";
 
 // Connect to SQLite MCP server
 const sqliteMCPAgent = await MCPAgent.from({

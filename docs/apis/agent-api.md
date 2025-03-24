@@ -144,7 +144,7 @@ type PublishTopic<O extends AgentOutput = AgentOutput> =
 ### Creating a Custom Agent
 
 ```typescript
-import { Agent } from "@aigne/core-next";
+import { Agent } from "@aigne/core";
 
 class GreetingAgent extends Agent {
   async process(input) {
@@ -168,7 +168,7 @@ console.log(output); // { greeting: "Hello, John!" }
 ### Using an Agent with Tools
 
 ```typescript
-import { Agent, FunctionAgent } from "@aigne/core-next";
+import { Agent, FunctionAgent } from "@aigne/core";
 
 // Create a tool Agent
 const formatTool = FunctionAgent.from({

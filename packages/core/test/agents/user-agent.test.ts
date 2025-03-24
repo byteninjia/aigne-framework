@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ExecutionEngine, UserAgent, createMessage } from "@aigne/core-next";
+import { ExecutionEngine, UserAgent, createMessage } from "@aigne/core";
 
 test("UserAgent.stream", async () => {
   const context = new ExecutionEngine({});

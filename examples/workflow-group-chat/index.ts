@@ -12,7 +12,7 @@ import {
   createMessage,
   getMessage,
   logger,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import inquirer from "inquirer";
 import { z } from "zod";
 

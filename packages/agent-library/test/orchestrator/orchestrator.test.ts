@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { type FullPlanOutput, OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core";
 
 test("AIAgent.call", async () => {
   const model = new OpenAIChatModel();

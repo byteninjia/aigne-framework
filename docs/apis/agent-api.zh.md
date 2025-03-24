@@ -144,7 +144,7 @@ type PublishTopic<O extends AgentOutput = AgentOutput> =
 ### 创建自定义 Agent
 
 ```typescript
-import { Agent } from "@aigne/core-next";
+import { Agent } from "@aigne/core";
 
 class GreetingAgent extends Agent {
   async process(input) {

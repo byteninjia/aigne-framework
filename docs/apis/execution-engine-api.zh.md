@@ -270,7 +270,7 @@ interface UserAgentOptions<I extends Message = Message, O extends Message = Mess
 ### 基本用法
 
 ```typescript
-import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -308,7 +308,7 @@ await engine.shutdown();
 ### 顺序执行多个 Agent
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -353,7 +353,7 @@ console.log(result);
 ### 并行执行多个 Agent
 
 ```typescript
-import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -392,7 +392,7 @@ console.log("故事:", result.story);
 ### 使用发布-订阅模式
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

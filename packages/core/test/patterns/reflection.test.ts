@@ -6,7 +6,7 @@ import {
   OpenAIChatModel,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 test("Patterns - Reflection", async () => {

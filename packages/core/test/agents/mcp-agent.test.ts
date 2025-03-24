@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { join } from "node:path";
-import { MCPAgent } from "@aigne/core-next";
+import { MCPAgent } from "@aigne/core";
 
 test("MCPAgent should correctly call tool, get prompt and read resource", async () => {
   const mcp = await MCPAgent.from({

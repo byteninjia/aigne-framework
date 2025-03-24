@@ -90,7 +90,7 @@ The following example demonstrates how to build a code-execution workflow:
 
 ```typescript
 import assert from "node:assert";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;

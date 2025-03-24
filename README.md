@@ -5,8 +5,8 @@
 [![GitHub star chart](https://img.shields.io/github/stars/AIGNE-io/aigne-framework?style=flat-square)](https://star-history.com/#AIGNE-io/aigne-framework)
 [![Open Issues](https://img.shields.io/github/issues-raw/AIGNE-io/aigne-framework?style=flat-square)](https://github.com/AIGNE-io/aigne-framework/issues)
 [![codecov](https://codecov.io/gh/AIGNE-io/aigne-framework/graph/badge.svg?token=DO07834RQL)](https://codecov.io/gh/AIGNE-io/aigne-framework)
-[![NPM Version](https://img.shields.io/npm/v/@aigne/core-next)](https://www.npmjs.com/package/@aigne/core-next)
-[![MIT licensed](https://img.shields.io/npm/l/@aigne/core-next)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/@aigne/core)](https://www.npmjs.com/package/@aigne/core)
+[![MIT licensed](https://img.shields.io/npm/l/@aigne/core)](https://github.com/AIGNE-io/aigne-framework/blob/main/LICENSE)
 
 ## What is AIGNE Framework
 
@@ -21,7 +21,7 @@ AIGNE Framework is a functional AI application development framework designed to
 ## Usage
 
 ```ts
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 import { DEFAULT_CHAT_MODEL, OPENAI_API_KEY } from "../env";
 
 const model = new OpenAIChatModel({

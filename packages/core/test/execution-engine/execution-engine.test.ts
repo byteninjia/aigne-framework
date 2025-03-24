@@ -5,7 +5,7 @@ import {
   FunctionAgent,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 test("ExecutionEngine.call", async () => {
   const plus = FunctionAgent.from(({ a, b }: { a: number; b: number }) => ({

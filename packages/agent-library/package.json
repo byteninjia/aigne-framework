@@ -40,7 +40,7 @@
     "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text"
   },
   "dependencies": {
-    "@aigne/core-next": "workspace:^",
+    "@aigne/core": "workspace:^",
     "zod": "^3.24.2"
   },
   "devDependencies": {

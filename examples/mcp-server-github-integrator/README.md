@@ -121,7 +121,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // Load environment variables
 const { OPENAI_API_KEY, GITHUB_PERSONAL_ACCESS_TOKEN } = process.env;

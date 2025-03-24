@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { AIAgent, ExecutionEngine, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;

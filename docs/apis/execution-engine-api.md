@@ -270,7 +270,7 @@ Predefined special topics:
 ### Basic Usage
 
 ```typescript
-import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -308,7 +308,7 @@ await engine.shutdown();
 ### Sequential Execution of Multiple Agents
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -353,7 +353,7 @@ console.log(result);
 ### Parallel Execution of Multiple Agents
 
 ```typescript
-import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -392,7 +392,7 @@ console.log("Story:", result.story);
 ### Using Publish-Subscribe Pattern
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

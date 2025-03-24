@@ -7,7 +7,7 @@ import {
   OpenAIChatModel,
   parallel,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

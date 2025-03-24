@@ -50,7 +50,7 @@
 
 ## 1.1.0-beta.7 (2025-3-13)
 
-- chore: rename @aigne/core to @aigne/core-next
+- chore: rename @aigne/core to @aigne/core
 
 ## 1.1.0-beta.6 (2025-3-13)
 

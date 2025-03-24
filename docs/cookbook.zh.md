@@ -48,7 +48,7 @@ ChatModel可以直接使用，但通常建议通过ExecutionEngine来使用，�
 **示例**:
 
 ```typescript
-import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core-next";
+import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core";
 
 // 初始化OpenAI模型
 const openaiModel = new OpenAIChatModel({
@@ -110,7 +110,7 @@ const engine = new ExecutionEngine({ model });
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core";
 import { z } from "zod";
 
 // 创建JavaScript沙箱
@@ -156,7 +156,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 概念提取Agent
 const conceptExtractor = AIAgent.from({
@@ -225,7 +225,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core";
 
 // 功能提取Agent
 const featureExtractor = AIAgent.from({
@@ -277,7 +277,7 @@ import {
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 // 编码Agent
@@ -354,7 +354,7 @@ console.log(result);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 转交给Agent B的函数
 function transfer_to_b() {
@@ -403,7 +403,7 @@ console.log(result2);
 **示例**:
 
 ```typescript
-import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core";
 
 // 产品支持Agent
 const productSupport = AIAgent.from({
@@ -480,7 +480,7 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 // 创建各专业Agent
 const puppeteer = await MCPAgent.from({
@@ -590,7 +590,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // 创建Puppeteer MCP Agent
 const puppeteerMCPAgent = await MCPAgent.from({
@@ -645,7 +645,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // 创建SQLite MCP Agent
 const sqlite = await MCPAgent.from({

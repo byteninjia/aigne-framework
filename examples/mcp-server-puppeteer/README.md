@@ -103,7 +103,7 @@ The following example demonstrates how to extract content from a website:
 
 ```typescript
 import assert from "node:assert";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

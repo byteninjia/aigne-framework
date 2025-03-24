@@ -5,7 +5,7 @@ import {
   UserAgent,
   createMessage,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import inquirer from "inquirer";
 
 test("runChatLoopInTerminal should respond /help /exit commands", async () => {

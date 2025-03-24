@@ -6,7 +6,7 @@ import {
   type Message,
   PromptTemplate,
   getMessage,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import {
   FULL_PLAN_PROMPT_TEMPLATE,
   type FullPlanOutput,

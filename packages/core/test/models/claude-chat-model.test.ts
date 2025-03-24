@@ -7,7 +7,7 @@ import {
   SystemMessageTemplate,
   ToolMessageTemplate,
   UserMessageTemplate,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import type Anthropic from "@anthropic-ai/sdk";
 import { createMockEventStream } from "../_utils/event-stream";
 

@@ -264,7 +264,7 @@ import {
   OpenAIChatModel,
   ExecutionEngine,
   MCPAgent
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 // 创建 AI 模型
 const model = new OpenAIChatModel({
@@ -313,7 +313,7 @@ await engine.shutdown();
 除了 Puppeteer MCP 服务器外，你还可以使用其他 MCP 服务器，如 SQLite MCP 服务器：
 
 ```typescript
-import { MCPAgent } from "@aigne/core-next";
+import { MCPAgent } from "@aigne/core";
 
 // 连接到 SQLite MCP 服务器
 const sqliteMCPAgent = await MCPAgent.from({

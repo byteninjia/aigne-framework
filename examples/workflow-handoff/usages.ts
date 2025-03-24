@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { AIAgent, ExecutionEngine, OpenAIChatModel } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

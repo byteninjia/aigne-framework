@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, createMessage } from "@aigne/core";
 import { z } from "zod";
 
 test("AIAgent.call", async () => {

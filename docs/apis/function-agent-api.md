@@ -101,7 +101,7 @@ type FunctionAgentFn<I extends AgentInput = AgentInput, O extends AgentOutput = 
 ### Basic Usage
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // Create a simple function
 function greet(input) {
@@ -129,7 +129,7 @@ console.log(output); // { message: "Hello, John!" }
 ### Asynchronous Functions
 
 ```typescript
-import { FunctionAgent } from "@aigne/core-next";
+import { FunctionAgent } from "@aigne/core";
 
 // Create an asynchronous function
 async function fetchUserData(input) {
@@ -157,7 +157,7 @@ console.log(userData); // { id: 123, name: "John Doe", email: "john@example.com"
 ### Agent Transfer
 
 ```typescript
-import { FunctionAgent, AIAgent, OpenAIChatModel } from "@aigne/core-next";
+import { FunctionAgent, AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -198,7 +198,7 @@ const result = await intentAnalyzer.call({ text: "I need some help" });
 ### Using in a Tool Chain
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

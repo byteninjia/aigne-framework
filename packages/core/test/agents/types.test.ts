@@ -5,7 +5,7 @@ import {
   replaceTransferAgentToName,
   transferAgentOutputKey,
   transferToAgentOutput,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 test("transferToAgentOutput", async () => {
   const agent = FunctionAgent.from(({ a, b }: { a: number; b: number }) => ({ sum: a + b }));

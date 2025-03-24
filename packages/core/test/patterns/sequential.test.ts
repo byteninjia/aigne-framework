@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ExecutionEngine, OpenAIChatModel, sequential } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, sequential } from "@aigne/core";
 
 test("Patterns - Sequential", async () => {
   const model = new OpenAIChatModel();

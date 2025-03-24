@@ -7,7 +7,7 @@ import {
   FunctionAgent,
   OpenAIChatModel,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import { z } from "zod";
 
 const { OPENAI_API_KEY } = process.env;

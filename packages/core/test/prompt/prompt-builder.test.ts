@@ -8,7 +8,7 @@ import {
   MESSAGE_KEY,
   PromptBuilder,
   createMessage,
-} from "@aigne/core-next";
+} from "@aigne/core";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 

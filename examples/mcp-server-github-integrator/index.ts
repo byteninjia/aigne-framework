@@ -8,7 +8,7 @@ import {
   OpenAIChatModel,
   logger,
   runChatLoopInTerminal,
-} from "@aigne/core-next";
+} from "@aigne/core";
 
 const { OPENAI_API_KEY, GITHUB_PERSONAL_ACCESS_TOKEN } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

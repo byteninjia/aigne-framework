@@ -122,7 +122,7 @@ type AIAgentToolChoice = "auto" | "none" | "required" | "router" | Agent;
 ### 创建基本的 AIAgent
 
 ```typescript
-import { AIAgent, OpenAIChatModel } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -143,7 +143,7 @@ console.log(output.text); // 输出 AI 的回复
 ### 使用工具的 AIAgent
 
 ```typescript
-import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -184,7 +184,7 @@ console.log(output.text); // "北京今天天气晴朗，温度24°C，湿度60%
 ### 使用路由模式的 AIAgent
 
 ```typescript
-import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core-next";
+import { AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,

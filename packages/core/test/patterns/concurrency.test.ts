@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ExecutionEngine, OpenAIChatModel, parallel } from "@aigne/core-next";
+import { AIAgent, ExecutionEngine, OpenAIChatModel, parallel } from "@aigne/core";
 
 test("Patterns - Concurrency", async () => {
   const model = new OpenAIChatModel();

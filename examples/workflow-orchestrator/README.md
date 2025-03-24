@@ -98,7 +98,7 @@ Here is the generated report for this example: [arcblock-deep-research.md](./gen
 ```typescript
 import assert from "node:assert";
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core";
 
 const { OPENAI_API_KEY } = process.env;
 assert(OPENAI_API_KEY, "Please set the OPENAI_API_KEY environment variable");

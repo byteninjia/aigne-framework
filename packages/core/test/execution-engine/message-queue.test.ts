@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { MessageQueue, createMessage } from "@aigne/core-next";
+import { MessageQueue, createMessage } from "@aigne/core";
 
 test("MessageQueue.subscribe should resolve a message", async () => {
   const messageQueue = new MessageQueue();
