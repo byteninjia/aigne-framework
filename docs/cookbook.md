@@ -9,6 +9,7 @@
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Core Concepts](#core-concepts)
+    - [Chat Model](#chat-model)
     - [Agent](#agent)
     - [Workflow](#workflow)
     - [Execution Engine](#execution-engine)
@@ -34,6 +35,38 @@
 AIGNE Framework is a framework for building applications based on Large Language Models (LLMs). It provides a series of tools and abstractions that enable developers to easily create complex AI workflows. This Cookbook aims to help developers understand the core concepts of AIGNE Framework and demonstrate through examples how to use different workflow patterns to solve real-world problems.
 
 ## Core Concepts
+
+### Chat Model
+
+In AIGNE Framework, ChatModel is an abstract base class for interacting with Large Language Models (LLMs). It provides a unified interface to handle different underlying model implementations, including:
+
+- **OpenAIChatModel**: For communicating with OpenAI's GPT series models
+- **ClaudeChatModel**: For communicating with Anthropic's Claude series models
+
+ChatModel can be used directly, but it's generally recommended to use it through ExecutionEngine to gain more advanced features like tool integration, error handling, and state management.
+
+**Example**:
+
+```typescript
+import { OpenAIChatModel, ClaudeChatModel } from "@aigne/core-next";
+
+// Initialize OpenAI model
+const openaiModel = new OpenAIChatModel({
+  apiKey: "YOUR_OPENAI_API_KEY",
+  model: "gpt-4o-mini", // Optional, defaults to "gpt-4o-mini"
+});
+
+// Initialize Claude model
+const claudeModel = new ClaudeChatModel({
+  apiKey: "YOUR_ANTHROPIC_API_KEY",
+  model: "claude-3-7-sonnet-latest", // Optional, defaults to "claude-3-7-sonnet-latest"
+});
+
+// Use with ExecutionEngine
+const engine = new ExecutionEngine({ model: openaiModel });
+```
+
+For more information, refer to the [ChatModel API documentation](./apis/chat-model.md).
 
 ### Agent
 
@@ -77,7 +110,7 @@ const engine = new ExecutionEngine({ model });
 **Example**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, FunctionAgent } from "@aigne/core-next";
 import { z } from "zod";
 
 // Create JavaScript sandbox
@@ -123,7 +156,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
 
 // Concept extractor Agent
 const conceptExtractor = AIAgent.from({
@@ -192,7 +225,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, parallel } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, parallel } from "@aigne/core-next";
 
 // Feature extraction Agent
 const featureExtractor = AIAgent.from({
@@ -240,7 +273,7 @@ console.log(result);
 ```typescript
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   UserInputTopic,
   UserOutputTopic,
@@ -321,7 +354,7 @@ console.log(result);
 **Example**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
 
 // Function to transfer to Agent B
 function transfer_to_b() {
@@ -370,7 +403,7 @@ console.log(result2);
 **Example**:
 
 ```typescript
-import { AIAgent, ChatModelOpenAI, ExecutionEngine } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine } from "@aigne/core-next";
 
 // Product support Agent
 const productSupport = AIAgent.from({
@@ -447,7 +480,7 @@ console.log(result3);
 
 ```typescript
 import { OrchestratorAgent } from "@aigne/agent-library";
-import { AIAgent, ChatModelOpenAI, ExecutionEngine, MCPAgent } from "@aigne/core-next";
+import { AIAgent, OpenAIChatModel, ExecutionEngine, MCPAgent } from "@aigne/core-next";
 
 // Create specialized Agents
 const puppeteer = await MCPAgent.from({
@@ -554,7 +587,7 @@ The Puppeteer MCP server allows AIGNE Framework to access and manipulate web con
 ```typescript
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core-next";
@@ -609,7 +642,7 @@ The SQLite MCP server allows AIGNE Framework to interact with SQLite databases.
 import { join } from "node:path";
 import {
   AIAgent,
-  ChatModelOpenAI,
+  OpenAIChatModel,
   ExecutionEngine,
   MCPAgent,
 } from "@aigne/core-next";
