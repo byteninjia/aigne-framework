@@ -49,10 +49,10 @@ You can perform various GitHub operations like:
 
 Always provide clear, concise responses with relevant information from GitHub.
 `,
-  enableHistory: true,
+  memory: true,
 });
 
-const userAgent = await engine.run(agent);
+const userAgent = engine.call(agent);
 
 await runChatLoopInTerminal(userAgent, {
   welcome:

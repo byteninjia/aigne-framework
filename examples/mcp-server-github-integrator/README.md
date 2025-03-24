@@ -163,9 +163,9 @@ Always provide clear, concise responses with relevant information from GitHub.
 });
 
 // Example: Search for repositories
-const result = await engine.run(
+const result = await engine.call(
+  agent,
   "Search for repositories related to 'modelcontextprotocol'",
-  agent
 );
 
 console.log(result.text);

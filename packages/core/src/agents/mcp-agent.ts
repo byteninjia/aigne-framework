@@ -21,7 +21,7 @@ import {
   toolFromMCPTool,
 } from "../utils/mcp-utils.js";
 import { createAccessorArray } from "../utils/type-utils.js";
-import { Agent, type AgentInput, type AgentOptions, type AgentOutput } from "./agent.js";
+import { Agent, type AgentOptions, type Message } from "./agent.js";
 
 const MCP_AGENT_CLIENT_NAME = "MCPAgent";
 const MCP_AGENT_CLIENT_VERSION = "0.0.1";
@@ -161,7 +161,7 @@ export class MCPAgent extends Agent {
     return false;
   }
 
-  async process(_input: AgentInput, _context?: Context): Promise<AgentOutput> {
+  async process(_input: Message, _context?: Context): Promise<Message> {
     throw new Error("Method not implemented.");
   }
 
@@ -171,12 +171,12 @@ export class MCPAgent extends Agent {
   }
 }
 
-export interface MCPToolBaseOptions<I extends AgentInput, O extends AgentOutput>
+export interface MCPToolBaseOptions<I extends Message, O extends Message>
   extends AgentOptions<I, O> {
   client: Client;
 }
 
-export abstract class MCPBase<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
+export abstract class MCPBase<I extends Message, O extends Message> extends Agent<I, O> {
   constructor(options: MCPToolBaseOptions<I, O>) {
     super(options);
     this.client = options.client;
@@ -189,8 +189,8 @@ export abstract class MCPBase<I extends AgentInput, O extends AgentOutput> exten
   }
 }
 
-export class MCPTool extends MCPBase<AgentInput, CallToolResult> {
-  async process(input: AgentInput): Promise<CallToolResult> {
+export class MCPTool extends MCPBase<Message, CallToolResult> {
+  async process(input: Message): Promise<CallToolResult> {
     const result = await debug.spinner(
       this.client.callTool({ name: this.name, arguments: input }),
       `Call tool ${this.name} from ${this.mcpServer}`,
@@ -201,7 +201,7 @@ export class MCPTool extends MCPBase<AgentInput, CallToolResult> {
   }
 }
 
-export interface MCPPromptInput extends AgentInput {
+export interface MCPPromptInput extends Message {
   [key: string]: string;
 }
 

@@ -42,27 +42,27 @@ Always provide clear, concise responses with relevant information from GitHub.
 
 // Example 1: Search for repositories
 console.log("Example 1: Searching for repositories");
-const searchResult = await engine.run(
-  "Search for repositories related to 'modelcontextprotocol' and limit to 3 results",
+const searchResult = await engine.call(
   agent,
+  "Search for repositories related to 'modelcontextprotocol' and limit to 3 results",
 );
 console.log(searchResult.text);
 console.log("\n------------------------\n");
 
 // Example 2: Get file contents
 console.log("Example 2: Getting file contents");
-const fileResult = await engine.run(
-  "Get the content of README.md from modelcontextprotocol/servers repository",
+const fileResult = await engine.call(
   agent,
+  "Get the content of README.md from modelcontextprotocol/servers repository",
 );
 console.log(fileResult.text);
 console.log("\n------------------------\n");
 
 // Example 3: List commits
 console.log("Example 3: Listing commits");
-const commitsResult = await engine.run(
-  "List the latest 3 commits from the modelcontextprotocol/servers repository",
+const commitsResult = await engine.call(
   agent,
+  "List the latest 3 commits from the modelcontextprotocol/servers repository",
 );
 console.log(commitsResult.text);
 
