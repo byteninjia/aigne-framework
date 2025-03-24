@@ -64,7 +64,7 @@ AI ->> User: The content is as follows: ...
 ```bash
 export OPENAI_API_KEY=YOUR_OPENAI_API_KEY # setup your OpenAI API key
 
-npx -y @aigne/example-mcp-server-puppeteer # run the example
+npx -y @aigne/example-mcp-puppeteer # run the example
 ```
 
 ## Installation
@@ -78,7 +78,7 @@ git clone https://github.com/AIGNE-io/aigne-framework
 ### Install Dependencies
 
 ```bash
-cd aigne-framework/examples/mcp-server-puppeteer
+cd aigne-framework/examples/mcp-puppeteer
 
 pnpm install
 ```

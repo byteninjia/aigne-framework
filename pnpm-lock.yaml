@@ -21,7 +21,7 @@ importers:
         specifier: ^8.4.1
         version: 8.4.1
 
-  examples/mcp-server-github-integrator:
+  examples/mcp-github:
     dependencies:
       '@aigne/core':
         specifier: workspace:^
@@ -33,7 +33,7 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
-  examples/mcp-server-puppeteer:
+  examples/mcp-puppeteer:
     dependencies:
       '@aigne/core':
         specifier: workspace:^
@@ -45,7 +45,7 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
-  examples/mcp-server-sqlite:
+  examples/mcp-sqlite:
     dependencies:
       '@aigne/core':
         specifier: workspace:^

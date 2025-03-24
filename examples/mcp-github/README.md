@@ -75,7 +75,7 @@ AI ->> User: Here's the README content: ...
 export OPENAI_API_KEY=YOUR_OPENAI_API_KEY # Setup your OpenAI API key
 export GITHUB_PERSONAL_ACCESS_TOKEN=YOUR_GITHUB_TOKEN # Setup your GitHub token
 
-npx -y @aigne/example-mcp-server-github # Run the example
+npx -y @aigne/example-mcp-github # Run the example
 ```
 
 ## Installation
@@ -89,7 +89,7 @@ git clone https://github.com/AIGNE-io/aigne-framework
 ### Install Dependencies
 
 ```bash
-cd aigne-framework/examples/mcp-server-github-integrator
+cd aigne-framework/examples/mcp-github
 
 pnpm install
 ```
@@ -168,7 +168,7 @@ const result = await engine.call(
   "Search for repositories related to 'modelcontextprotocol'",
 );
 
-console.log(result.text);
+console.log(result);
 // Output:
 // I found several repositories related to 'modelcontextprotocol':
 //

@@ -69,7 +69,7 @@ AI ->> User: There are 10 products in the database.
 ```bash
 export OPENAI_API_KEY=YOUR_OPENAI_API_KEY # setup your OpenAI API key
 
-npx -y @aigne/example-mcp-server-sqlite # run the example
+npx -y @aigne/example-mcp-sqlite # run the example
 ```
 
 ## Installation
@@ -83,7 +83,7 @@ git clone https://github.com/AIGNE-io/aigne-framework
 ### Install Dependencies
 
 ```bash
-cd aigne-framework/examples/mcp-server-sqlite
+cd aigne-framework/examples/mcp-sqlite
 
 pnpm install
 ```

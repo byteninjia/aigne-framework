@@ -46,7 +46,7 @@ const searchResult = await engine.call(
   agent,
   "Search for repositories related to 'modelcontextprotocol' and limit to 3 results",
 );
-console.log(searchResult.text);
+console.log(searchResult);
 console.log("\n------------------------\n");
 
 // Example 2: Get file contents
@@ -55,7 +55,7 @@ const fileResult = await engine.call(
   agent,
   "Get the content of README.md from modelcontextprotocol/servers repository",
 );
-console.log(fileResult.text);
+console.log(fileResult);
 console.log("\n------------------------\n");
 
 // Example 3: List commits
@@ -64,6 +64,6 @@ const commitsResult = await engine.call(
   agent,
   "List the latest 3 commits from the modelcontextprotocol/servers repository",
 );
-console.log(commitsResult.text);
+console.log(commitsResult);
 
 await engine.shutdown();

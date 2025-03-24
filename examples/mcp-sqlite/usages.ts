@@ -11,7 +11,7 @@ const model = new OpenAIChatModel({
 
 const sqlite = await MCPAgent.from({
   command: "uvx",
-  args: ["-q", "mcp-server-sqlite", "--db-path", join(process.cwd(), "usages.db")],
+  args: ["-q", "mcp-sqlite", "--db-path", join(process.cwd(), "usages.db")],
 });
 
 const engine = new ExecutionEngine({

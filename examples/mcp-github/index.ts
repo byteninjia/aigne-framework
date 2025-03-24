@@ -6,6 +6,7 @@ import {
   ExecutionEngine,
   MCPAgent,
   OpenAIChatModel,
+  getMessage,
   logger,
   runChatLoopInTerminal,
 } from "@aigne/core";
@@ -58,7 +59,7 @@ await runChatLoopInTerminal(userAgent, {
   welcome:
     "Hello! I'm a chatbot that can help you interact with GitHub. Try asking me a question about GitHub repositories!",
   defaultQuestion: "Search for repositories related to 'aigne-framework'",
-  onResponse: (response) => console.log(response.text),
+  onResponse: (response) => console.log(getMessage(response)),
 });
 
 process.exit(0);
