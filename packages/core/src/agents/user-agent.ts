@@ -9,7 +9,7 @@ import { Agent, type AgentOptions, type Message } from "./agent.js";
 
 export interface UserAgentOptions<I extends Message = Message, O extends Message = Message>
   extends AgentOptions<I, O> {
-  context?: Context;
+  context: Context;
   process?: (input: I, context: Context) => PromiseOrValue<O>;
 }
 
@@ -29,7 +29,7 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
     this.context = options.context;
   }
 
-  private context?: Context;
+  readonly context: Context;
 
   private get ctx() {
     if (!this.context) throw new Error("UserAgent must have a context");
@@ -38,19 +38,20 @@ export class UserAgent<I extends Message = Message, O extends Message = Message>
 
   private _process?: (input: I, context: Context) => PromiseOrValue<O>;
 
-  async process(input: I, context?: Context): Promise<O> {
-    const ctx = context ?? this.context;
-    if (!ctx) throw new Error("UserAgent must have a context");
+  override call(input: string | I, context?: Context): Promise<O> {
+    return super.call(input, context ?? this.context);
+  }
 
+  async process(input: I, context: Context): Promise<O> {
     if (this._process) {
-      return this._process(input, ctx);
+      return this._process(input, context);
     }
 
     const publicTopic =
       typeof this.publishTopic === "function" ? await this.publishTopic(input) : this.publishTopic;
 
     if (publicTopic?.length) {
-      ctx.publish(publicTopic, input, this);
+      context.publish(publicTopic, input, this);
       return {} as O;
     }
 
