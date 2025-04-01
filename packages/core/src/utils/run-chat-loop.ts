@@ -1,4 +1,5 @@
 import inquirer from "inquirer";
+import ora from "ora";
 import type { Message } from "../agents/agent.js";
 import type { UserAgent } from "../agents/user-agent.js";
 import { logger } from "./logger.js";
@@ -16,6 +17,8 @@ export async function runChatLoopInTerminal(
   userAgent: UserAgent,
   { log = console.log.bind(console), ...options }: ChatLoopOptions = {},
 ) {
+  logger.setSpinner(ora());
+
   let isLoopExited = false;
 
   let prompt: ReturnType<typeof inquirer.prompt<{ question: string }>> | undefined;
