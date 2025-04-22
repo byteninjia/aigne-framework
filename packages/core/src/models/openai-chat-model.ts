@@ -26,6 +26,20 @@ import {
 
 const CHAT_MODEL_OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
+export interface OpenAIChatModelCapabilities {
+  supportsNativeStructuredOutputs: boolean;
+  supportsEndWithSystemMessage: boolean;
+  supportsToolsUseWithJsonSchema: boolean;
+  supportsParallelToolCalls: boolean;
+  supportsToolsEmptyParameters: boolean;
+  supportsTemperature: boolean;
+}
+
+const OPENAI_CHAT_MODEL_CAPABILITIES: Record<string, Partial<OpenAIChatModelCapabilities>> = {
+  "o4-mini": { supportsParallelToolCalls: false, supportsTemperature: false },
+  "o3-mini": { supportsParallelToolCalls: false, supportsTemperature: false },
+};
+
 export interface OpenAIChatModelOptions {
   apiKey?: string;
   baseURL?: string;
@@ -53,6 +67,9 @@ export class OpenAIChatModel extends ChatModel {
   constructor(public options?: OpenAIChatModelOptions) {
     super();
     if (options) checkArguments(this.name, openAIChatModelOptionsSchema, options);
+
+    const preset = options?.model ? OPENAI_CHAT_MODEL_CAPABILITIES[options.model] : undefined;
+    Object.assign(this, preset);
   }
 
   protected _client?: OpenAI;
@@ -63,6 +80,7 @@ export class OpenAIChatModel extends ChatModel {
   protected supportsToolsUseWithJsonSchema = true;
   protected supportsParallelToolCalls = true;
   protected supportsToolsEmptyParameters = true;
+  protected supportsTemperature = true;
 
   get client() {
     const apiKey = this.options?.apiKey || process.env[this.apiKeyEnvName] || this.apiKeyDefault;
@@ -84,14 +102,17 @@ export class OpenAIChatModel extends ChatModel {
     _context: Context,
     options?: AgentCallOptions,
   ): Promise<AgentResponse<ChatModelOutput>> {
+    const messages = await this.getRunMessages(input);
     const body: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.options?.model || CHAT_MODEL_OPENAI_DEFAULT_MODEL,
-      temperature: input.modelOptions?.temperature ?? this.modelOptions?.temperature,
+      temperature: this.supportsTemperature
+        ? (input.modelOptions?.temperature ?? this.modelOptions?.temperature)
+        : undefined,
       top_p: input.modelOptions?.topP ?? this.modelOptions?.topP,
       frequency_penalty:
         input.modelOptions?.frequencyPenalty ?? this.modelOptions?.frequencyPenalty,
       presence_penalty: input.modelOptions?.presencePenalty ?? this.modelOptions?.presencePenalty,
-      messages: await this.getRunMessages(input),
+      messages,
       stream_options: {
         include_usage: true,
       },
@@ -323,6 +344,7 @@ async function extractResultFromStream(
     async start(controller) {
       try {
         let text = "";
+        let refusal = "";
         const toolCalls: (NonNullable<ChatModelOutput["toolCalls"]>[number] & {
           args: string;
         })[] = [];
@@ -365,6 +387,17 @@ async function extractResultFromStream(
             }
           }
 
+          if (choice?.delta.refusal) {
+            refusal += choice.delta.refusal;
+            if (!jsonMode) {
+              controller.enqueue({
+                delta: {
+                  text: { text: choice.delta.refusal },
+                },
+              });
+            }
+          }
+
           if (chunk.usage) {
             controller.enqueue({
               delta: {
@@ -379,6 +412,7 @@ async function extractResultFromStream(
           }
         }
 
+        text = text || refusal;
         if (jsonMode && text) {
           controller.enqueue({
             delta: {

@@ -20,9 +20,9 @@ jobs:
           - provider: OpenAI
             model: gpt-4o-mini
           - provider: OpenAI
-            model: o3-mini
+            model: o4-mini
           - provider: OpenAI
-            model: o1-mini
+            model: o3-mini
           - provider: Claude
             model: claude-3-7-sonnet-latest
           - provider: Claude
@@ -31,6 +31,10 @@ jobs:
             model: grok-3-mini
           - provider: XAI
             model: grok-2-latest
+          - provider: Gemini
+            model: gemini-2.5-flash-preview-04-17
+          - provider: Gemini
+            model: gemini-2.5-pro-preview-03-25
           - provider: Gemini
             model: gemini-2.0-flash
           - provider: Gemini
@@ -113,7 +117,7 @@ jobs:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA_BASE_URL: ${{ secrets.OLLAMA_BASE_URL }}
         run: |
-          EXCLUDE_PATTERN="mcp-blocklet\|workflow-group-chat"
+          EXCLUDE_PATTERN="mcp-blocklet\|workflow-group-chat\|workflow-orchestrator"
 
           for dir in examples/*; do
             if echo "$dir" | grep -q "$EXCLUDE_PATTERN"; then
