@@ -1,12 +1,21 @@
+import { EOL } from "node:os";
 import { inspect } from "node:util";
 import {
   type Agent,
+  type AgentResponseStream,
   ChatModel,
   type ChatModelOutput,
   type Context,
+  type ContextEventMap,
+  MESSAGE_KEY,
   type Message,
 } from "@aigne/core";
 import type { ContextUsage } from "@aigne/core/execution-engine/usage";
+import {
+  mergeAgentResponseChunk,
+  readableStreamToAsyncIterator,
+} from "@aigne/core/utils/stream-utils.js";
+import type { Listener } from "@aigne/core/utils/typed-event-emtter.js";
 import {
   type DefaultRenderer,
   Listr,
@@ -17,6 +26,7 @@ import {
   figures,
 } from "@aigne/listr2";
 import chalk from "chalk";
+import wrap from "wrap-ansi";
 import { z } from "zod";
 import { promiseWithResolvers } from "../utils/promise-with-resolvers.js";
 import { parseDuration } from "../utils/time.js";
@@ -25,6 +35,7 @@ const DEBUG_DEPTH = z.number().int().default(2).safeParse(Number(process.env.DEB
 
 export interface TerminalTracerOptions {
   verbose?: boolean;
+  aiResponsePrefix?: (context: Context) => string;
 }
 
 export class TerminalTracer {
@@ -38,121 +49,151 @@ export class TerminalTracer {
   private tasks: { [callId: string]: Task } = {};
 
   async run(agent: Agent, input: Message) {
+    this.spinner.start();
+
+    const context = this.context.newContext({ reset: true });
+
+    const listr = new AIGNEListr(
+      {
+        formatResult: (result) => {
+          return [
+            this.wrap(this.options.aiResponsePrefix?.(context) || ""),
+            this.wrap(this.formatAIResponse(result)),
+          ];
+        },
+      },
+      [],
+      {
+        concurrent: true,
+        forceTTY: process.env.CI === "true",
+        rendererOptions: {
+          collapseSubtasks: false,
+          writeBottomBarDirectly: true,
+          icon: {
+            [ListrDefaultRendererLogLevels.PENDING]: () => this.spinner.fetch(),
+            [ListrDefaultRendererLogLevels.OUTPUT_WITH_BOTTOMBAR]: "",
+          },
+        },
+      },
+    );
+
+    const onAgentStarted: Listener<"agentStarted", ContextEventMap> = async ({
+      contextId,
+      parentContextId,
+      agent,
+      input,
+      timestamp,
+    }) => {
+      const task: Task = {
+        ...promiseWithResolvers(),
+        listr: promiseWithResolvers(),
+        startTime: timestamp,
+      };
+      this.tasks[contextId] = task;
+
+      const listrTask: Parameters<typeof listr.add>[0] = {
+        title: this.formatTaskTitle(agent),
+        task: (ctx, taskWrapper) => {
+          const subtask = taskWrapper.newListr([{ task: () => task.promise }]);
+          task.listr.resolve({ subtask, taskWrapper, ctx });
+          return subtask;
+        },
+        rendererOptions: {
+          persistentOutput: true,
+          outputBar: Number.POSITIVE_INFINITY,
+          bottomBar: Number.POSITIVE_INFINITY,
+        },
+      };
+
+      const parentTask = parentContextId ? this.tasks[parentContextId] : undefined;
+      if (parentTask) {
+        parentTask.listr.promise.then(({ subtask }) => {
+          subtask.add(listrTask);
+        });
+      } else {
+        listr.add(listrTask);
+      }
+
+      const { taskWrapper } = await task.listr.promise;
+
+      if (this.options.verbose) {
+        taskWrapper.output = this.formatAgentStartedOutput(agent, input);
+      }
+    };
+
+    const onAgentSucceed: Listener<"agentSucceed", ContextEventMap> = async ({
+      agent,
+      contextId,
+      parentContextId,
+      output,
+      timestamp,
+    }) => {
+      const task = this.tasks[contextId];
+      if (!task) return;
+
+      task.endTime = timestamp;
+
+      const { taskWrapper, ctx } = await task.listr.promise;
+
+      if (agent instanceof ChatModel) {
+        const { usage, model } = output as ChatModelOutput;
+        task.usage = usage;
+        task.extraTitleMetadata ??= {};
+        if (model) task.extraTitleMetadata.model = model;
+      }
+
+      taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
+      if (this.options.verbose) {
+        taskWrapper.output = this.formatAgentSucceedOutput(agent, output);
+      }
+
+      if (!parentContextId || !this.tasks[parentContextId]) {
+        Object.assign(ctx, output);
+      }
+
+      task.resolve();
+    };
+
+    const onAgentFailed: Listener<"agentFailed", ContextEventMap> = async ({
+      agent,
+      contextId,
+      error,
+      timestamp,
+    }) => {
+      const task = this.tasks[contextId];
+      if (!task) return;
+
+      task.endTime = timestamp;
+
+      const { taskWrapper } = await task.listr.promise;
+      taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
+      taskWrapper.output = this.formatAgentFailedOutput(agent, error);
+
+      task.reject(error);
+    };
+
+    context.on("agentStarted", onAgentStarted);
+    context.on("agentSucceed", onAgentSucceed);
+    context.on("agentFailed", onAgentFailed);
+
     try {
-      this.spinner.start();
+      const stream = await context.call(agent, input, { streaming: true });
 
-      const context = this.context.newContext({ reset: true });
-
-      const listr = this.newListr();
-
-      context.on(
-        "agentStarted",
-        async ({ contextId, parentContextId, agent, input, timestamp }) => {
-          const task: Task = {
-            ...promiseWithResolvers(),
-            listr: promiseWithResolvers(),
-            startTime: timestamp,
-          };
-          this.tasks[contextId] = task;
-
-          const listrTask: Parameters<typeof listr.add>[0] = {
-            title: this.formatTaskTitle(agent),
-            task: (ctx, taskWrapper) => {
-              const subtask = taskWrapper.newListr([{ task: () => task.promise }]);
-              task.listr.resolve({ subtask, taskWrapper, ctx });
-              return subtask;
-            },
-            rendererOptions: {
-              persistentOutput: true,
-              outputBar: Number.POSITIVE_INFINITY,
-              bottomBar: Number.POSITIVE_INFINITY,
-            },
-          };
-
-          const parentTask = parentContextId ? this.tasks[parentContextId] : undefined;
-          if (parentTask) {
-            parentTask.listr.promise.then(({ subtask }) => {
-              subtask.add(listrTask);
-            });
-          } else {
-            listr.add(listrTask);
-          }
-
-          const { taskWrapper } = await task.listr.promise;
-
-          if (this.options.verbose) {
-            taskWrapper.output = this.formatAgentStartedOutput(agent, input);
-          }
-        },
-      );
-
-      context.on(
-        "agentSucceed",
-        async ({ agent, contextId, parentContextId, output, timestamp }) => {
-          const task = this.tasks[contextId];
-          if (!task) return;
-
-          task.endTime = timestamp;
-
-          const { taskWrapper, ctx } = await task.listr.promise;
-
-          if (agent instanceof ChatModel) {
-            const { usage, model } = output as ChatModelOutput;
-            task.usage = usage;
-            task.extraTitleMetadata ??= {};
-            if (model) task.extraTitleMetadata.model = model;
-          }
-
-          taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
-          if (this.options.verbose) {
-            taskWrapper.output = this.formatAgentSucceedOutput(agent, output);
-          }
-
-          if (!parentContextId || !this.tasks[parentContextId]) {
-            Object.assign(ctx, output);
-          }
-
-          task.resolve();
-        },
-      );
-
-      context.on("agentFailed", async ({ agent, contextId, error, timestamp }) => {
-        const task = this.tasks[contextId];
-        if (!task) return;
-
-        task.endTime = timestamp;
-
-        const { taskWrapper } = await task.listr.promise;
-        taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
-        taskWrapper.output = this.formatAgentFailedOutput(agent, error);
-
-        task.reject(error);
-      });
-
-      const [result] = await Promise.all([
-        listr.waitTaskAndRun(),
-        context.call(agent, input).finally(() => {
-          listr.resolveWaitingTask();
-        }),
-      ]);
+      const result = await listr.run(stream);
 
       return { result, context };
     } finally {
       this.spinner.stop();
+      context.off("agentStarted", onAgentStarted);
+      context.off("agentSucceed", onAgentSucceed);
+      context.off("agentFailed", onAgentFailed);
     }
   }
 
-  protected newListr() {
-    return new MyListr([], {
-      concurrent: true,
-      rendererOptions: {
-        collapseSubtasks: false,
-        writeBottomBarDirectly: true,
-        icon: {
-          [ListrDefaultRendererLogLevels.PENDING]: () => this.spinner.fetch(),
-          [ListrDefaultRendererLogLevels.OUTPUT_WITH_BOTTOMBAR]: "",
-        },
-      },
+  protected wrap(str: string) {
+    return wrap(str, process.stdout.columns ?? 80, {
+      hard: true,
+      trim: false,
     });
   }
 
@@ -216,6 +257,12 @@ ${this.formatMessage(data)}`;
 
     return title;
   }
+
+  formatAIResponse({ [MESSAGE_KEY]: msg, ...message }: Message = {}) {
+    const text = msg && typeof msg === "string" ? msg : undefined;
+    const json = Object.keys(message).length > 0 ? inspect(message, { colors: true }) : undefined;
+    return [text, json].filter(Boolean).join("\n");
+  }
 }
 
 type Task = ReturnType<typeof promiseWithResolvers<void>> & {
@@ -232,28 +279,63 @@ type Task = ReturnType<typeof promiseWithResolvers<void>> & {
   extraTitleMetadata?: { [key: string]: string };
 };
 
-class MyListr extends Listr {
-  private taskPromise = promiseWithResolvers();
-  private isTaskPromiseResolved = false;
+class AIGNEListr extends Listr {
+  private result: Message = {};
 
-  resolveWaitingTask() {
-    if (!this.isTaskPromiseResolved) {
-      this.taskPromise.resolve();
-      this.isTaskPromiseResolved = true;
+  private isStreamRunning = false;
+
+  constructor(
+    public myOptions: {
+      formatResult: (result: Message) => string | string[];
+    },
+    ...args: ConstructorParameters<typeof Listr<unknown, "default", "simple">>
+  ) {
+    super(...args);
+
+    const renderer = new this.rendererClass(
+      this.tasks,
+      this.rendererClassOptions,
+      this.events,
+    ) as DefaultRenderer;
+
+    const spinner = (renderer as unknown as { spinner: Spinner }).spinner;
+
+    // Override the `create` method of renderer to customize the output
+    const create = renderer.create;
+    renderer.create = (...args) => {
+      const [tasks, output] = create.call(renderer, ...args);
+      const l = [
+        "",
+        tasks,
+        "",
+        ...[this.myOptions.formatResult(this.result)].flat(),
+        this.isStreamRunning ? spinner.fetch() : "",
+      ];
+
+      return [l.join(EOL), output];
+    };
+
+    // @ts-ignore initialize the renderer
+    this.renderer = renderer;
+  }
+
+  override async run(stream: AgentResponseStream<Message>): Promise<Message> {
+    this.add({ task: () => this.extractStream(stream) });
+
+    return await super.run().then(() => ({ ...this.result }));
+  }
+
+  private async extractStream(stream: AgentResponseStream<Message>) {
+    this.isStreamRunning = true;
+
+    this.result = {};
+
+    for await (const value of readableStreamToAsyncIterator(stream)) {
+      mergeAgentResponseChunk(this.result, value);
     }
-  }
 
-  override add(...args: Parameters<Listr["add"]>): ReturnType<Listr["add"]> {
-    const result = super.add(...args);
-    this.resolveWaitingTask();
-    return result;
-  }
+    this.isStreamRunning = false;
 
-  async waitTaskAndRun(ctx?: unknown) {
-    if (!this.tasks.length) await this.taskPromise.promise;
-
-    if (!this.tasks.length) return ctx;
-
-    return super.run(ctx);
+    return this.result;
   }
 }

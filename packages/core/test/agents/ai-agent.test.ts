@@ -1,6 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
-import { AIAgent, ExecutionEngine, createMessage } from "@aigne/core";
+import { AIAgent, ExecutionEngine, MESSAGE_KEY, type Message, createMessage } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
+import { arrayToAgentResponseStream } from "@aigne/core/utils/stream-utils";
 import { z } from "zod";
 
 test("AIAgent.call", async () => {
@@ -11,7 +12,9 @@ test("AIAgent.call", async () => {
     instructions: "You are a friendly chatbot",
   });
 
-  spyOn(model, "call").mockReturnValueOnce(Promise.resolve({ text: "Hello, how can I help you?" }));
+  spyOn(model, "process").mockReturnValueOnce(
+    Promise.resolve({ text: "Hello, how can I help you?" }),
+  );
 
   const result = await engine.call(agent, "hello");
 
@@ -30,7 +33,7 @@ test("AIAgent.call with structured output", async () => {
     }),
   });
 
-  spyOn(model, "call").mockReturnValueOnce(
+  spyOn(model, "process").mockReturnValueOnce(
     Promise.resolve({
       json: {
         username: "Alice",
@@ -67,7 +70,7 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
 
   const plusCall = spyOn(plus, "call");
 
-  spyOn(model, "call")
+  spyOn(model, "process")
     .mockReturnValueOnce(
       Promise.resolve({
         toolCalls: [
@@ -100,6 +103,7 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
   expect(plusCall).toHaveBeenCalledWith(
     { ...createMessage("1 + 1 = ?"), a: 1, b: 1 },
     expect.anything(),
+    expect.anything(),
   );
   expect(result).toEqual(createMessage("The sum is 2"));
 });
@@ -128,7 +132,7 @@ test("AIAgent with router toolChoice mode should return tool result", async () =
 
   const plusCall = spyOn(plus, "call");
 
-  spyOn(model, "call")
+  spyOn(model, "process")
     .mockReturnValueOnce(
       Promise.resolve({
         toolCalls: [
@@ -150,6 +154,38 @@ test("AIAgent with router toolChoice mode should return tool result", async () =
   expect(plusCall).toHaveBeenCalledWith(
     { ...createMessage("1 + 1 = ?"), a: 1, b: 1 },
     expect.anything(),
+    expect.anything(),
   );
   expect(result).toEqual({ sum: 2 });
+});
+
+test("AIAgent.call with streaming output", async () => {
+  const model = new OpenAIChatModel();
+
+  const context = new ExecutionEngine({ model }).newContext();
+
+  const agent = AIAgent.from<Message, { [MESSAGE_KEY]: string }>({});
+
+  spyOn(model, "process").mockReturnValueOnce(
+    Promise.resolve(
+      arrayToAgentResponseStream([
+        { delta: { text: { text: "Here " } } },
+        { delta: { text: { text: "is " } } },
+      ]),
+    ),
+  );
+
+  const result = await agent.call("write a long blog about arcblock", context, { streaming: true });
+
+  const reader = result.getReader();
+
+  expect(reader.read()).resolves.toEqual({
+    done: false,
+    value: { delta: { text: createMessage("Here ") } },
+  });
+  expect(reader.read()).resolves.toEqual({
+    done: false,
+    value: { delta: { text: createMessage("is ") } },
+  });
+  expect(reader.read()).resolves.toEqual({ done: true, value: undefined });
 });
