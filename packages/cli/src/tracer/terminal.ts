@@ -1,5 +1,5 @@
 import { EOL } from "node:os";
-import { inspect } from "node:util";
+import { format, inspect } from "node:util";
 import {
   type Agent,
   type AgentResponseStream,
@@ -11,6 +11,7 @@ import {
   type Message,
 } from "@aigne/core";
 import type { ContextUsage } from "@aigne/core/execution-engine/usage";
+import { logger } from "@aigne/core/utils/logger.js";
 import {
   mergeAgentResponseChunk,
   readableStreamToAsyncIterator,
@@ -23,20 +24,15 @@ import {
   type ListrRenderer,
   type ListrTaskWrapper,
   Spinner,
-  figures,
 } from "@aigne/listr2";
+import { markedTerminal } from "@aigne/marked-terminal";
 import chalk from "chalk";
 import { Marked } from "marked";
-import { markedTerminal } from "marked-terminal";
 import wrap from "wrap-ansi";
-import { z } from "zod";
 import { promiseWithResolvers } from "../utils/promise-with-resolvers.js";
 import { parseDuration } from "../utils/time.js";
 
-const DEBUG_DEPTH = z.number().int().default(2).safeParse(Number(process.env.DEBUG_DEPTH)).data;
-
 export interface TerminalTracerOptions {
-  verbose?: boolean;
   aiResponsePrefix?: (context: Context) => string;
 }
 
@@ -58,10 +54,7 @@ export class TerminalTracer {
     const listr = new AIGNEListr(
       {
         formatResult: (result) => {
-          return [
-            this.wrap(this.options.aiResponsePrefix?.(context) || ""),
-            this.wrap(this.formatAIResponse(result)),
-          ];
+          return [this.options.aiResponsePrefix?.(context) || "", this.formatAIResponse(result)];
         },
       },
       [],
@@ -83,7 +76,6 @@ export class TerminalTracer {
       contextId,
       parentContextId,
       agent,
-      input,
       timestamp,
     }) => {
       const task: Task = {
@@ -115,12 +107,6 @@ export class TerminalTracer {
       } else {
         listr.add(listrTask);
       }
-
-      const { taskWrapper } = await task.listr.promise;
-
-      if (this.options.verbose) {
-        taskWrapper.output = this.formatAgentStartedOutput(agent, input);
-      }
     };
 
     const onAgentSucceed: Listener<"agentSucceed", ContextEventMap> = async ({
@@ -145,9 +131,6 @@ export class TerminalTracer {
       }
 
       taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
-      if (this.options.verbose) {
-        taskWrapper.output = this.formatAgentSucceedOutput(agent, output);
-      }
 
       if (!parentContextId || !this.tasks[parentContextId]) {
         Object.assign(ctx, output);
@@ -169,7 +152,6 @@ export class TerminalTracer {
 
       const { taskWrapper } = await task.listr.promise;
       taskWrapper.title = this.formatTaskTitle(agent, { task, usage: true, time: true });
-      taskWrapper.output = this.formatAgentFailedOutput(agent, error);
 
       task.reject(error);
     };
@@ -190,35 +172,6 @@ export class TerminalTracer {
       context.off("agentSucceed", onAgentSucceed);
       context.off("agentFailed", onAgentFailed);
     }
-  }
-
-  protected wrap(str: string) {
-    return wrap(str, process.stdout.columns ?? 80, {
-      hard: true,
-      trim: false,
-    });
-  }
-
-  formatAgentStartedOutput(agent: Agent, data: Message) {
-    return `\
-${chalk.grey(figures.pointer)} call agent ${agent.name} started with input:
-${this.formatMessage(data)}`;
-  }
-
-  formatAgentSucceedOutput(agent: Agent, data: Message) {
-    return `\
-${chalk.grey(figures.tick)} call agent ${agent.name} succeed with output:
-${this.formatMessage(data)}`;
-  }
-
-  formatAgentFailedOutput(agent: Agent, data: Error) {
-    return `\
-${chalk.grey(figures.cross)} call agent ${agent.name} failed with error:
-${this.formatMessage(data)}`;
-  }
-
-  formatMessage(data: unknown) {
-    return inspect(data, { colors: true, depth: DEBUG_DEPTH });
   }
 
   formatTokenUsage(usage: Partial<ContextUsage>, extra?: { [key: string]: string }) {
@@ -260,7 +213,7 @@ ${this.formatMessage(data)}`;
     return title;
   }
 
-  private marked = new Marked().use(markedTerminal());
+  private marked = new Marked().use(markedTerminal({ forceHyperLink: false }));
 
   formatAIResponse({ [MESSAGE_KEY]: msg, ...message }: Message = {}) {
     const text =
@@ -289,9 +242,11 @@ class AIGNEListr extends Listr {
 
   private isStreamRunning = false;
 
+  private logs: string[] = [];
+
   constructor(
     public myOptions: {
-      formatResult: (result: Message) => string | string[];
+      formatResult: (result: Message) => string[];
     },
     ...args: ConstructorParameters<typeof Listr<unknown, "default", "simple">>
   ) {
@@ -313,11 +268,11 @@ class AIGNEListr extends Listr {
         "",
         tasks,
         "",
-        ...[this.myOptions.formatResult(this.result)].flat(),
+        ...this.myOptions.formatResult(this.result).map((i) => this.wrap(i)),
         this.isStreamRunning ? spinner.fetch() : "",
       ];
 
-      return [l.join(EOL), output];
+      return [l.join(EOL), [output, ...this.logs.splice(0)].filter(Boolean).join(EOL)];
     };
 
     // @ts-ignore initialize the renderer
@@ -325,9 +280,17 @@ class AIGNEListr extends Listr {
   }
 
   override async run(stream: AgentResponseStream<Message>): Promise<Message> {
-    this.add({ task: () => this.extractStream(stream) });
+    const originalLog = logger.log;
 
-    return await super.run().then(() => ({ ...this.result }));
+    try {
+      logger.log = (...args) => this.logs.push(format(...args));
+
+      this.add({ task: () => this.extractStream(stream) });
+
+      return await super.run().then(() => ({ ...this.result }));
+    } finally {
+      logger.log = originalLog;
+    }
   }
 
   private async extractStream(stream: AgentResponseStream<Message>) {
@@ -342,5 +305,12 @@ class AIGNEListr extends Listr {
     this.isStreamRunning = false;
 
     return this.result;
+  }
+
+  protected wrap(str: string) {
+    return wrap(str, process.stdout.columns ?? 80, {
+      hard: true,
+      trim: false,
+    });
   }
 }
