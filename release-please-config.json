@@ -19,5 +19,11 @@
     "examples/workflow-router": {},
     "examples/workflow-sequential": {},
     "examples/chat-bot": {}
-  }
+  },
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "updatePeerDependencies": true
+    }
+  ]
 }
