@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "start": "bun run index.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:llm": "bun test"
   },
   "dependencies": {
     "@aigne/cli": "workspace:^",
