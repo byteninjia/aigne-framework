@@ -3,47 +3,40 @@ import { Agent } from "../agents/agent.js";
 import { load } from "../loader/index.js";
 import { ChatModel } from "../models/chat-model.js";
 import { checkArguments, createAccessorArray } from "../utils/type-utils.js";
-import { type Context, ExecutionContext } from "./context.js";
+import { AIGNEContext, type Context } from "./context.js";
 import { MessageQueue } from "./message-queue.js";
 import type { ContextLimits } from "./usage.js";
 
-export interface ExecutionEngineOptions {
+export interface AIGNEOptions {
   name?: string;
   description?: string;
   model?: ChatModel;
-  tools?: Agent[];
+  skills?: Agent[];
   agents?: Agent[];
   limits?: ContextLimits;
 }
 
-export interface ExecutionEngineRunOptions {
-  returnActiveAgent?: boolean;
-}
-
-export class ExecutionEngine {
-  static async load({
-    path,
-    ...options
-  }: { path: string } & ExecutionEngineOptions): Promise<ExecutionEngine> {
-    const { model, agents, tools, ...aigne } = await load({ path });
-    return new ExecutionEngine({
+export class AIGNE {
+  static async load({ path, ...options }: { path: string } & AIGNEOptions): Promise<AIGNE> {
+    const { model, agents, skills, ...aigne } = await load({ path });
+    return new AIGNE({
       ...options,
       model: options.model || model,
       name: options.name || aigne.name || undefined,
       description: options.description || aigne.description || undefined,
       agents: agents.concat(options.agents ?? []),
-      tools: tools.concat(options.tools ?? []),
+      skills: skills.concat(options.skills ?? []),
     });
   }
 
-  constructor(options?: ExecutionEngineOptions) {
-    if (options) checkArguments("ExecutionEngine", executionEngineOptionsSchema, options);
+  constructor(options?: AIGNEOptions) {
+    if (options) checkArguments("AIGNE", aigneOptionsSchema, options);
 
     this.name = options?.name;
     this.description = options?.description;
     this.model = options?.model;
     this.limits = options?.limits;
-    if (options?.tools?.length) this.tools.push(...options.tools);
+    if (options?.skills?.length) this.skills.push(...options.skills);
     if (options?.agents?.length) this.addAgent(...options.agents);
 
     this.initProcessExitHandler();
@@ -57,14 +50,14 @@ export class ExecutionEngine {
 
   model?: ChatModel;
 
-  readonly tools = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
+  readonly skills = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
 
   readonly agents = createAccessorArray<Agent>([], (arr, name) => arr.find((i) => i.name === name));
 
   limits?: ContextLimits;
 
   addAgent(...agents: Agent[]) {
-    checkArguments("ExecutionEngine.addAgent", executionEngineAddAgentArgsSchema, agents);
+    checkArguments("AIGNE.addAgent", aigneAddAgentArgsSchema, agents);
 
     for (const agent of agents) {
       this.agents.push(agent);
@@ -74,16 +67,16 @@ export class ExecutionEngine {
   }
 
   newContext() {
-    return new ExecutionContext(this);
+    return new AIGNEContext(this);
   }
 
   publish = ((...args) => {
-    return new ExecutionContext(this).publish(...args);
+    return new AIGNEContext(this).publish(...args);
   }) as Context["publish"];
 
-  call = ((...args: Parameters<Context["call"]>) => {
-    return new ExecutionContext(this).call(...args);
-  }) as Context["call"];
+  invoke = ((...args: Parameters<Context["invoke"]>) => {
+    return new AIGNEContext(this).invoke(...args);
+  }) as Context["invoke"];
 
   subscribe = ((...args) => {
     return this.messageQueue.subscribe(...args);
@@ -94,7 +87,7 @@ export class ExecutionEngine {
   }) as Context["unsubscribe"];
 
   async shutdown() {
-    for (const tool of this.tools) {
+    for (const tool of this.skills) {
       await tool.shutdown();
     }
     for (const agent of this.agents) {
@@ -109,10 +102,10 @@ export class ExecutionEngine {
   }
 }
 
-const executionEngineOptionsSchema = z.object({
+const aigneOptionsSchema = z.object({
   model: z.instanceof(ChatModel).optional(),
-  tools: z.array(z.instanceof(Agent)).optional(),
+  skills: z.array(z.instanceof(Agent)).optional(),
   agents: z.array(z.instanceof(Agent)).optional(),
 });
 
-const executionEngineAddAgentArgsSchema = z.array(z.instanceof(Agent));
+const aigneAddAgentArgsSchema = z.array(z.instanceof(Agent));

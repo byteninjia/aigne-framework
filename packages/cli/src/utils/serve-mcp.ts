@@ -1,4 +1,4 @@
-import { type ExecutionEngine, getMessage } from "@aigne/core";
+import { type AIGNE, getMessage } from "@aigne/core";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express, { type Request, type Response, Router, json } from "express";
@@ -8,10 +8,10 @@ import { promiseWithResolvers } from "./promise-with-resolvers.js";
 
 export async function serveMCPServer({
   pathname = "/mcp",
-  engine,
+  aigne,
   host = "localhost",
   port,
-}: { pathname?: string; engine: ExecutionEngine; host?: string; port: number }) {
+}: { pathname?: string; aigne: AIGNE; host?: string; port: number }) {
   const app = express();
 
   app.use(json());
@@ -22,7 +22,7 @@ export async function serveMCPServer({
 
   router.post(pathname, async (req: Request, res: Response) => {
     try {
-      const server = createMcpServer(engine);
+      const server = createMcpServer(aigne);
 
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
@@ -87,25 +87,25 @@ export async function serveMCPServer({
   return httpServer;
 }
 
-export function createMcpServer(engine: ExecutionEngine) {
+export function createMcpServer(aigne: AIGNE) {
   const server = new McpServer(
     {
-      name: engine.name || "aigne-mcp-server",
+      name: aigne.name || "aigne-mcp-server",
       version: AIGNE_CLI_VERSION,
     },
     {
       capabilities: { tools: {} },
-      instructions: engine.description,
+      instructions: aigne.description,
     },
   );
 
-  for (const agent of engine.agents) {
+  for (const agent of aigne.agents) {
     const schema = agent.inputSchema;
 
     if (!(schema instanceof ZodObject)) throw new Error("Agent input schema must be a ZodObject");
 
     server.tool(agent.name, agent.description || "", schema.shape as ZodRawShape, async (input) => {
-      const result = await engine.call(agent, input);
+      const result = await aigne.invoke(agent, input);
 
       return {
         content: [

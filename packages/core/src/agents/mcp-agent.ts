@@ -24,7 +24,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import pRetry from "p-retry";
 import { type ZodType, z } from "zod";
-import type { Context } from "../execution-engine/context.js";
+import type { Context } from "../aigne/context.js";
 import { logger } from "../utils/logger.js";
 import {
   promptFromMCPPrompt,
@@ -168,7 +168,7 @@ export class MCPAgent extends Agent {
     } = client.getServerCapabilities() ?? {};
 
     logger.mcp(`Listing tools from ${mcpServer}`);
-    const tools = isToolsAvailable
+    const skills = isToolsAvailable
       ? await client.listTools().then(({ tools }) => {
           logger.mcp(
             `Listing tools from ${mcpServer} completed %O`,
@@ -211,7 +211,7 @@ export class MCPAgent extends Agent {
     return new MCPAgent({
       name: client.getServerVersion()?.name,
       client,
-      tools,
+      skills,
       prompts,
       resources,
     });
@@ -235,7 +235,7 @@ export class MCPAgent extends Agent {
     arr.find((i) => i.name === name),
   );
 
-  get isCallable(): boolean {
+  get isInvokable(): boolean {
     return false;
   }
 

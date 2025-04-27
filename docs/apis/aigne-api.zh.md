@@ -1,27 +1,27 @@
-# 执行引擎 API 参考
+# AIGNE API 参考
 
-**中文** | [English](./execution-engine-api.md)
+**中文** | [English](./aigne-api.md)
 
 执行引擎是 AIGNE 框架的核心组件，负责协调 Agent 之间的交互和工作流程的执行。它提供了一个统一的接口来运行单个或多个 Agent，并管理它们之间的消息传递。
 
-## ExecutionEngine 类
+## AIGNE 类
 
-`ExecutionEngine` 继承自 `EventEmitter`，为 Agent 提供执行环境。它为每个操作创建一个执行上下文。
+`AIGNE` 继承自 `EventEmitter`，为 Agent 提供执行环境。它为每个操作创建一个执行上下文。
 
 ### 构造函数
 
 ```typescript
-constructor(options?: ExecutionEngineOptions)
+constructor(options?: AIGNEOptions)
 ```
 
 #### 参数
 
 - `model`: `ChatModel` - 默认的 AI 聊天模型实例
-- `tools`: `Agent[]` - 全局可用的工具列表
+- `skills`: `Agent[]` - 全局可用的工具列表
 - `agents`: `Agent[]` - 初始化时添加的 Agent 列表
 - `limits`: `ContextLimits` - 执行引擎的限制配置
   - `maxTokens`: `number` - 允许处理的最大 Token 数
-  - `maxAgentCalls`: `number` - 允许的最大 Agent 调用次数
+  - `maxAgentInvokes`: `number` - 允许的最大 Agent 调用次数
   - `timeout`: `number` - 执行超时时间（毫秒）
 
 ### 方法
@@ -86,7 +86,7 @@ unsubscribe(topic: string, listener: (message: AgentOutput) => void)
 - `topic`: `string` - 要取消订阅的主题
 - `listener`: `(message: AgentOutput) => void` - 之前注册的回调函数
 
-#### `call`
+#### `invoke`
 
 调用一个 Agent 并返回输出。此方法有多种重载方式，每种方式都有不同的用途。
 
@@ -94,14 +94,14 @@ unsubscribe(topic: string, listener: (message: AgentOutput) => void)
 // 创建一个用户代理以持续调用 Agent
 // 返回一个 UserAgent 实例，用于持续与执行引擎交互
 // 适合需要多轮对话或持续交互的场景
-call<I extends Message, O extends Message>(agent: Runnable<I, O>): UserAgent<I, O>;
+invoke<I extends Message, O extends Message>(agent: Agent<I, O>): UserAgent<I, O>;
 
 // 使用消息调用 Agent
 // 使用提供的消息调用指定的 Agent
 // 返回 Agent 的输出
 // 适合需要单次交互的场景
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options?: { streaming?: false }
 ): Promise<O>;
@@ -110,8 +110,8 @@ call<I extends Message, O extends Message>(
 // 使用提供的消息调用指定的 Agent
 // 返回实时的响应块流，而不是等待完整响应
 // 适合实时处理或显示增量结果的场景
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { streaming: true }
 ): Promise<AgentResponseStream<O>>;
@@ -120,26 +120,26 @@ call<I extends Message, O extends Message>(
 // 使用提供的消息调用指定的 Agent
 // 返回 Agent 的输出和最终活动的 Agent
 // 适合需要跟踪活动 Agent 的场景
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { returnActiveAgent: true; streaming?: false },
-): Promise<[O, Runnable]>;
+): Promise<[O, Agent]>;
 
 // 使用消息调用 Agent 并返回响应块流和活动 Agent 的 Promise
 // 使用提供的消息调用指定的 Agent
 // 返回响应块流和一个解析为最终活动 Agent 的 Promise
 // 适合在跟踪活动 Agent 的同时进行实时处理
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { returnActiveAgent: true; streaming: true },
-): Promise<[AgentResponseStream<O>, Promise<Runnable>]>;
+): Promise<[AgentResponseStream<O>, Promise<Agent>]>;
 ```
 
 ##### 参数
 
-- `agent`: `Runnable<I, O>` - 要调用的 Agent 或函数
+- `agent`: `Agent<I, O>` - 要调用的 Agent
 - `message`: `I | string` - 要传递给 Agent 的消息
 - `options`: `{ returnActiveAgent?: boolean }` - 调用选项
 
@@ -147,7 +147,7 @@ call<I extends Message, O extends Message>(
 
 - `UserAgent<I, O>` - 当仅提供 agent 参数时，返回可用于持续交互的 UserAgent 实例
 - `Promise<O>` - 当提供 message 参数时，返回处理结果
-- `Promise<[O, Runnable]>` - 当提供 options 参数时，返回处理结果和活动的 Agent
+- `Promise<[O, Agent]>` - 当提供 options 参数时，返回处理结果和活动的 Agent
 
 #### `shutdown`
 
@@ -157,49 +157,9 @@ call<I extends Message, O extends Message>(
 async shutdown()
 ```
 
-## 工具函数
 
-### `sequential`
-
-创建一个按顺序执行多个 Agent 的函数。
-
-```typescript
-function sequential(...agents: [Runnable, ...Runnable[]]): FunctionAgentFn
-```
-
-#### 参数
-
-- `agents`: `[Runnable, ...Runnable[]]` - 要按顺序执行的 Agent 列表
-
-#### 返回值
-
-- `FunctionAgentFn` - 返回一个函数，该函数按顺序执行指定的 Agent 并合并它们的输出
-
-### `parallel`
-
-创建一个并行执行多个 Agent 的函数。
-
-```typescript
-function parallel(...agents: [Runnable, ...Runnable[]]): FunctionAgentFn
-```
-
-#### 参数
-
-- `agents`: `[Runnable, ...Runnable[]]` - 要并行执行的 Agent 列表
-
-#### 返回值
-
-- `FunctionAgentFn` - 返回一个函数，该函数并行执行指定的 Agent 并合并它们的输出
 
 ## 相关类型
-
-### `Runnable`
-
-定义可运行的实体类型。
-
-```typescript
-type Runnable = Agent | FunctionAgentFn;
-```
 
 ### `UserAgent`
 
@@ -255,10 +215,10 @@ interface UserAgentOptions<I extends Message = Message, O extends Message = Mess
 ### 使用执行引擎的流式响应
 
 ```typescript
-import { ExecutionEngine, AIAgent } from "@aigne/core";
+import { AIGNE, AIAgent } from "@aigne/core";
 import { mergeAgentResponseChunk } from "@aigne/core/utils/stream-utils.js";
 
-const engine = new ExecutionEngine();
+const aigne = new AIGNE();
 
 const agent = AIAgent.from({
   model,
@@ -266,7 +226,7 @@ const agent = AIAgent.from({
 })
 
 // 启用流式响应进行调用
-const stream = await engine.call(agent, "你好，请告诉我关于流式 API 的信息", { streaming: true });
+const stream = await aigne.invoke(agent, "你好，请告诉我关于流式 API 的信息", { streaming: true });
 
 const reader = stream.getReader();
 const result = {};
@@ -282,7 +242,7 @@ while (true) {
 console.log("最终结果:", result);
 
 // 同时获取流和活动 Agent（适用于更复杂的工作流）
-const [agentStream, activeAgentPromise] = await engine.call(
+const [agentStream, activeAgentPromise] = await aigne.invoke(
   assistant,
   "你好，请推荐一些书籍",
   { streaming: true, returnActiveAgent: true }
@@ -298,7 +258,7 @@ console.log("活动 Agent 是:", activeAgent.name);
 ### 基本用法
 
 ```typescript
-import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -313,30 +273,30 @@ const assistant = AIAgent.from({
 });
 
 // 创建执行引擎
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
 // 方法 1: 直接调用并获取结果
-const result = await engine.call(assistant, "你好，请告诉我今天的日期");
+const result = await aigne.invoke(assistant, "你好，请告诉我今天的日期");
 console.log(result);
 
 // 方法 2: 创建交互式会话
-const userAgent = engine.call(assistant);
+const userAgent = aigne.invoke(assistant);
 
 // 发送消息并获取回复
-const response1 = await userAgent.call("你好！");
+const response1 = await userAgent.invoke("你好！");
 console.log(response1);
 
-const response2 = await userAgent.call("你能帮我写一首诗吗？");
+const response2 = await userAgent.invoke("你能帮我写一首诗吗？");
 console.log(response2);
 
 // 关闭执行引擎
-await engine.shutdown();
+await aigne.shutdown();
 ```
 
 ### 顺序执行多个 Agent
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, FunctionAgent, TeamAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -367,11 +327,14 @@ const summarizer = AIAgent.from({
 });
 
 // 创建执行引擎
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
 // 顺序执行 Agent
-const result = await engine.call(
-  sequential(dataPrep, analyzer, summarizer),
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [dataPrep, analyzer, summarizer],
+    mode: ProcessMode.sequential
+  }),
   { data: [10, 20, 30, 40, 50] }
 );
 
@@ -381,7 +344,7 @@ console.log(result);
 ### 并行执行多个 Agent
 
 ```typescript
-import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, TeamAgent, ProcessMode, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -405,11 +368,14 @@ const storyteller = AIAgent.from({
 });
 
 // 创建执行引擎
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
 // 并行执行 Agent
-const result = await engine.call(
-  parallel(poet, storyteller),
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [poet, storyteller],
+    mode: ProcessMode.parallel,
+  }),
   { topic: "月亮" }
 );
 
@@ -420,7 +386,7 @@ console.log("故事:", result.story);
 ### 使用发布-订阅模式
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -452,13 +418,13 @@ const travelAgent = AIAgent.from({
 });
 
 // 创建执行引擎并添加 Agent
-const engine = new ExecutionEngine();
-engine.addAgent(weatherAgent, travelAgent);
+const aigne = new AIGNE();
+aigne.addAgent(weatherAgent, travelAgent);
 
 // 订阅最终结果
-engine.subscribe("travel.response", (response) => {
+aigne.subscribe("travel.response", (response) => {
   console.log("旅游建议:", response);
 });
 
 // 发布初始请求
-engine.publish("weather.request", { city: "北京" });
+aigne.publish("weather.request", { city: "北京" });

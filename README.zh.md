@@ -40,7 +40,7 @@ pnpm add @aigne/core
 ### 使用示例
 
 ```ts
-import { AIAgent, ExecutionEngine } from "@aigne/core";
+import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 
 const model = new OpenAIChatModel({
@@ -60,21 +60,21 @@ const agentA = AIAgent.from({
   name: "AgentA",
   instructions: "You are a helpful agent.",
   outputKey: "A",
-  tools: [transferToAgentB],
+  skills: [transferToAgentB],
 });
 
 const agentB = AIAgent.from({
   name: "AgentB",
   instructions: "Only speak in Haikus.",
   outputKey: "B",
-  tools: [transferToAgentA],
+  skills: [transferToAgentA],
 });
 
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
-const userAgent = await engine.call(agentA);
+const userAgent = aigne.invoke(agentA);
 
-const response = await userAgent.call("transfer to agent b");
+const response = await userAgent.invoke("transfer to agent b");
 // 输出
 // {
 //   B: "Agent B awaits here,  \nIn haikus I shall speak now,  \nWhat do you seek, friend?",
@@ -96,7 +96,7 @@ const response = await userAgent.call("transfer to agent b");
   - [AI Agent API](./docs/apis/ai-agent-api.md) ([English](./docs/apis/ai-agent-api.md) | [中文](./docs/apis/ai-agent-api.zh.md))
   - [Function Agent API](./docs/apis/function-agent-api.md) ([English](./docs/apis/function-agent-api.md) | [中文](./docs/apis/function-agent-api.zh.md))
   - [MCP Agent API](./docs/apis/mcp-agent-api.md) ([English](./docs/apis/mcp-agent-api.md) | [中文](./docs/apis/mcp-agent-api.zh.md))
-  - [Execution Engine API](./docs/apis/execution-engine-api.md) ([English](./docs/apis/execution-engine-api.md) | [中文](./docs/apis/execution-engine-api.zh.md))
+  - [AIGNE API](./docs/apis/aigne-api.md) ([English](./docs/apis/aigne-api.md) | [中文](./docs/apis/aigne-api.zh.md))
   - [服务器/客户端 API](./docs/apis/server-client-api.md) ([English](./docs/apis/server-client-api.md) | [中文](./docs/apis/server-client-api.zh.md))
 
 ## 架构

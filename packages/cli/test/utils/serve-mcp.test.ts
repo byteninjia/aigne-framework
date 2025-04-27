@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { join } from "node:path";
 import { AIGNE_CLI_VERSION } from "@aigne/cli/constants";
 import { serveMCPServer } from "@aigne/cli/utils/serve-mcp.js";
-import { ExecutionEngine } from "@aigne/core";
+import { AIGNE } from "@aigne/core";
 import { arrayToAgentProcessAsyncGenerator } from "@aigne/core/utils/stream-utils.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -14,10 +14,10 @@ test("serveMCPServer should work", async () => {
   const port = await detect();
 
   const testAgentsPath = join(import.meta.dirname, "../../test-agents");
-  const engine = await ExecutionEngine.load({ path: testAgentsPath });
+  const aigne = await AIGNE.load({ path: testAgentsPath });
 
-  assert(engine.model, "engine.model should be defined");
-  spyOn(engine.model, "process")
+  assert(aigne.model, "aigne.model should be defined");
+  spyOn(aigne.model, "process")
     .mockReturnValueOnce(
       Promise.resolve({
         text: "hello, how can I help you?",
@@ -25,7 +25,7 @@ test("serveMCPServer should work", async () => {
     )
     .mockImplementation(() => Promise.reject(new Error("not implemented")));
 
-  const server = await serveMCPServer({ engine, port });
+  const server = await serveMCPServer({ aigne, port });
 
   const url = `http://localhost:${port}/mcp`;
   const transport = new StreamableHTTPClientTransport(new URL(url));
@@ -61,8 +61,8 @@ test("serveMCPServer should respond error from not supported methods", async () 
   const port = await detect();
 
   const testAgentsPath = join(import.meta.dirname, "../../test-agents");
-  const engine = await ExecutionEngine.load({ path: testAgentsPath });
-  const server = await serveMCPServer({ engine, port });
+  const aigne = await AIGNE.load({ path: testAgentsPath });
+  const server = await serveMCPServer({ aigne, port });
 
   spyOn(console, "error").mockReturnValueOnce(undefined);
   const getResult = await fetch(`http://localhost:${port}/mcp`, { method: "GET" });
@@ -93,14 +93,14 @@ test("serveMCPServer should respond error from agent processing", async () => {
   const port = await detect();
 
   const testAgentsPath = join(import.meta.dirname, "../../test-agents");
-  const engine = await ExecutionEngine.load({ path: testAgentsPath });
+  const aigne = await AIGNE.load({ path: testAgentsPath });
 
-  assert(engine.model, "engine.model should be defined");
-  spyOn(engine.model, "process").mockReturnValueOnce(
+  assert(aigne.model, "engine.model should be defined");
+  spyOn(aigne.model, "process").mockReturnValueOnce(
     arrayToAgentProcessAsyncGenerator([new Error("test error from model")]),
   );
 
-  const server = await serveMCPServer({ engine, port });
+  const server = await serveMCPServer({ aigne, port });
 
   const url = `http://localhost:${port}/mcp`;
   const transport = new StreamableHTTPClientTransport(new URL(url));
@@ -130,7 +130,7 @@ test("serveMCPServer should respond 500 error", async () => {
   const port = await detect();
 
   const testAgentsPath = join(import.meta.dirname, "../../test-agents");
-  const engine = await ExecutionEngine.load({ path: testAgentsPath });
+  const aigne = await AIGNE.load({ path: testAgentsPath });
 
   await using _ = await mockModule("@aigne/cli/utils/serve-mcp.ts", () => ({
     createMcpServer: () => {
@@ -138,7 +138,7 @@ test("serveMCPServer should respond 500 error", async () => {
     },
   }));
 
-  const server = await serveMCPServer({ engine, port });
+  const server = await serveMCPServer({ aigne, port });
 
   const url = `http://localhost:${port}/mcp`;
   const transport = new StreamableHTTPClientTransport(new URL(url));

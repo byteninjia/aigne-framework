@@ -1,16 +1,19 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
-import { AIAgent, ExecutionEngine, MESSAGE_KEY, type Message, createMessage } from "@aigne/core";
+import { AIAgent, AIGNE, MESSAGE_KEY, type Message, createMessage } from "@aigne/core";
 import { ClaudeChatModel } from "@aigne/core/models/claude-chat-model.js";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
-import { readableStreamToArray, stringToAgentResponseStream } from "@aigne/core/utils/stream-utils";
+import {
+  readableStreamToArray,
+  stringToAgentResponseStream,
+} from "@aigne/core/utils/stream-utils.js";
 import { z } from "zod";
 import { createToolCallResponse } from "../_utils/openai-like-utils.js";
 
-test.each([true, false])("AIAgent.call with streaming %p", async (streaming) => {
+test.each([true, false])("AIAgent.invoke with streaming %p", async (streaming) => {
   const model = new OpenAIChatModel();
 
-  const context = new ExecutionEngine({ model }).newContext();
+  const context = new AIGNE({ model }).newContext();
 
   const agent = AIAgent.from<Message, { [MESSAGE_KEY]: string }>({});
 
@@ -18,7 +21,7 @@ test.each([true, false])("AIAgent.call with streaming %p", async (streaming) => 
     Promise.resolve(stringToAgentResponseStream("Here is a beautiful T-shirt")),
   );
 
-  const result = await agent.call("write a long blog about arcblock", context, { streaming });
+  const result = await agent.invoke("write a long blog about arcblock", context, { streaming });
 
   if (streaming) {
     assert(result instanceof ReadableStream);
@@ -28,9 +31,9 @@ test.each([true, false])("AIAgent.call with streaming %p", async (streaming) => 
   }
 });
 
-test("AIAgent.call with structured output", async () => {
+test("AIAgent.invoke with structured output", async () => {
   const model = new OpenAIChatModel();
-  const engine = new ExecutionEngine({ model });
+  const aigne = new AIGNE({ model });
 
   const agent = AIAgent.from({
     instructions: "You are a friendly chatbot",
@@ -49,14 +52,14 @@ test("AIAgent.call with structured output", async () => {
     }),
   );
 
-  const result = await engine.call(agent, "hello, i'm Alice");
+  const result = await aigne.invoke(agent, "hello, i'm Alice");
 
   expect(result).toEqual({ username: "Alice", questionCategory: "greeting" });
 });
 
 test("AIAgent should pass both arguments (model generated) and input (user provided) to the tool", async () => {
   const model = new OpenAIChatModel();
-  const engine = new ExecutionEngine({ model });
+  const aigne = new AIGNE({ model });
 
   const plus = AIAgent.from({
     name: "plus",
@@ -72,10 +75,10 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
 
   const agent = AIAgent.from({
     instructions: "You are a friendly chatbot",
-    tools: [plus],
+    skills: [plus],
   });
 
-  const plusCall = spyOn(plus, "call");
+  const plusCall = spyOn(plus, "invoke");
 
   spyOn(model, "process")
     .mockReturnValueOnce(
@@ -84,7 +87,7 @@ test("AIAgent should pass both arguments (model generated) and input (user provi
     .mockReturnValueOnce(Promise.resolve({ json: { sum: 2 } }))
     .mockReturnValueOnce(Promise.resolve({ text: "The sum is 2" }));
 
-  const result = await engine.call(agent, "1 + 1 = ?");
+  const result = await aigne.invoke(agent, "1 + 1 = ?");
 
   expect(plusCall).toHaveBeenCalledWith(
     { ...createMessage("1 + 1 = ?"), a: 1, b: 1 },
@@ -98,16 +101,16 @@ test.each([true, false])(
   "AIAgent with router toolChoice should return router result with streaming %p",
   async (streaming) => {
     const model = new OpenAIChatModel();
-    const engine = new ExecutionEngine({ model });
+    const aigne = new AIGNE({ model });
 
     const sales = AIAgent.from({ name: "sales", inputSchema: z.object({ indent: z.string() }) });
 
     const agent = AIAgent.from({
-      tools: [sales],
+      skills: [sales],
       toolChoice: "router",
     });
 
-    const salesCall = spyOn(sales, "call");
+    const salesCall = spyOn(sales, "invoke");
 
     spyOn(model, "process")
       .mockReturnValueOnce(
@@ -117,7 +120,7 @@ test.each([true, false])(
         Promise.resolve(stringToAgentResponseStream("Here is a beautiful T-shirt")),
       );
 
-    const result = await engine.call(agent, "Hello, I want to buy a T-shirt", { streaming });
+    const result = await aigne.invoke(agent, "Hello, I want to buy a T-shirt", { streaming });
 
     if (streaming) {
       assert(result instanceof ReadableStream);
@@ -136,7 +139,7 @@ test.each([true, false])(
 
 test("AIAgent should use self model first and then use model from context", async () => {
   const openaiModel = new OpenAIChatModel();
-  const engine = new ExecutionEngine({ model: openaiModel });
+  const engine = new AIGNE({ model: openaiModel });
 
   const claudeModel = new ClaudeChatModel();
   const agent = AIAgent.from({
@@ -150,6 +153,6 @@ test("AIAgent should use self model first and then use model from context", asyn
     Promise.resolve(stringToAgentResponseStream("Answer from claude model")),
   );
 
-  const result = await engine.call(agent, "Hello");
+  const result = await engine.invoke(agent, "Hello");
   expect(result).toEqual(createMessage("Answer from claude model"));
 });

@@ -1,6 +1,6 @@
 import { inspect } from "node:util";
 import { ZodObject, type ZodType, z } from "zod";
-import type { Context } from "../execution-engine/context.js";
+import type { Context } from "../aigne/context.js";
 import { createMessage } from "../prompt/prompt-builder.js";
 import { logger } from "../utils/logger.js";
 import {
@@ -49,14 +49,14 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
 
   includeInputInOutput?: boolean;
 
-  tools?: (Agent | FunctionAgentFn)[];
+  skills?: (Agent | FunctionAgentFn)[];
 
   disableEvents?: boolean;
 
   memory?: AgentMemory | AgentMemoryOptions | true;
 }
 
-export interface AgentCallOptions {
+export interface AgentInvokeOptions {
   streaming?: boolean;
 }
 
@@ -72,7 +72,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     this.includeInputInOutput = options.includeInputInOutput;
     this.subscribeTopic = options.subscribeTopic;
     this.publishTopic = options.publishTopic as PublishTopic<Message>;
-    if (options.tools?.length) this.tools.push(...options.tools.map(functionToAgent));
+    if (options.skills?.length) this.skills.push(...options.skills.map(functionToAgent));
     this.disableEvents = options.disableEvents;
     if (options.memory) {
       this.memory =
@@ -121,13 +121,13 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
   readonly publishTopic?: PublishTopic<Message>;
 
-  readonly tools = createAccessorArray<Agent>([], (arr, name) => arr.find((t) => t.name === name));
+  readonly skills = createAccessorArray<Agent>([], (arr, name) => arr.find((t) => t.name === name));
 
   private disableEvents?: boolean;
 
   /**
    * Attach agent to context:
-   * - subscribe to topic and call process method when message received
+   * - subscribe to topic and invoke process method when message received
    * - subscribe to memory topic if memory is enabled
    * @param context Context to attach
    */
@@ -137,7 +137,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     for (const topic of orArrayToArray(this.subscribeTopic).concat(this.topic)) {
       context.subscribe(topic, async ({ message, context }) => {
         try {
-          await context.call(this, message);
+          await context.invoke(this, message);
         } catch (error) {
           context.emit("agentFailed", { agent: this, error });
         }
@@ -145,11 +145,13 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     }
   }
 
-  addTool<I extends Message, O extends Message>(tool: Agent<I, O> | FunctionAgentFn<I, O>) {
-    this.tools.push(typeof tool === "function" ? functionToAgent(tool) : tool);
+  addSkill(...skills: (Agent | FunctionAgentFn)[]) {
+    this.skills.push(
+      ...skills.map((skill) => (typeof skill === "function" ? functionToAgent(skill) : skill)),
+    );
   }
 
-  get isCallable(): boolean {
+  get isInvokable(): boolean {
     return !!this.process;
   }
 
@@ -157,39 +159,39 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     if (context) {
       const { status } = context;
       if (status === "timeout") {
-        throw new Error(`ExecutionEngine for agent ${this.name} has timed out`);
+        throw new Error(`AIGNE for agent ${this.name} has timed out`);
       }
     }
   }
 
   private async newDefaultContext() {
-    return import("../execution-engine/context.js").then((m) => new m.ExecutionContext());
+    return import("../aigne/context.js").then((m) => new m.AIGNEContext());
   }
 
-  async call(
+  async invoke(
     input: I | string,
     context: Context | undefined,
-    options: AgentCallOptions & { streaming: true },
+    options: AgentInvokeOptions & { streaming: true },
   ): Promise<AgentResponseStream<O>>;
-  async call(
+  async invoke(
     input: I | string,
     context?: Context,
-    options?: AgentCallOptions & { streaming?: false },
+    options?: AgentInvokeOptions & { streaming?: false },
   ): Promise<O>;
-  async call(
+  async invoke(
     input: I | string,
     context?: Context,
-    options?: AgentCallOptions,
+    options?: AgentInvokeOptions,
   ): Promise<AgentResponse<O>>;
-  async call(
+  async invoke(
     input: I | string,
     context?: Context,
-    options?: AgentCallOptions,
+    options?: AgentInvokeOptions,
   ): Promise<AgentResponse<O>> {
     const ctx: Context = context ?? (await this.newDefaultContext());
     const message = typeof input === "string" ? createMessage(input) : input;
 
-    logger.core("Call agent %s started with input: %O", this.name, input);
+    logger.core("Invoke agent %s started with input: %O", this.name, input);
     if (!this.disableEvents) ctx.emit("agentStarted", { agent: this, input: message });
 
     try {
@@ -203,7 +205,10 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
       this.checkContextStatus(ctx);
 
-      const response = await this.process(parsedInput, ctx, options);
+      let response = await this.process(parsedInput, ctx, options);
+      if (response instanceof Agent) {
+        response = transferToAgentOutput(response);
+      }
 
       if (options?.streaming) {
         const stream =
@@ -255,22 +260,22 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
     this.postprocess(input, finalOutput, context);
 
-    logger.core("Call agent %s succeed with output: %O", this.name, finalOutput);
+    logger.core("Invoke agent %s succeed with output: %O", this.name, finalOutput);
     if (!this.disableEvents) context.emit("agentSucceed", { agent: this, output: finalOutput });
 
     return finalOutput;
   }
 
   private processAgentError(error: Error, context: Context): never {
-    logger.core("Call agent %s failed with error: %O", this.name, error);
+    logger.core("Invoke agent %s failed with error: %O", this.name, error);
     if (!this.disableEvents) context.emit("agentFailed", { agent: this, error });
     throw error;
   }
 
-  protected checkUsageAgentCalls(context: Context) {
+  protected checkAgentInvokesUsage(context: Context) {
     const { limits, usage } = context;
-    if (limits?.maxAgentCalls && usage.agentCalls >= limits.maxAgentCalls) {
-      throw new Error(`Exceeded max agent calls ${usage.agentCalls}/${limits.maxAgentCalls}`);
+    if (limits?.maxAgentInvokes && usage.agentCalls >= limits.maxAgentInvokes) {
+      throw new Error(`Exceeded max agent invokes ${usage.agentCalls}/${limits.maxAgentInvokes}`);
     }
 
     usage.agentCalls++;
@@ -278,7 +283,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
   protected preprocess(_: I, context: Context) {
     this.checkContextStatus(context);
-    this.checkUsageAgentCalls(context);
+    this.checkAgentInvokesUsage(context);
   }
 
   protected postprocess(input: I, output: O, context: Context) {
@@ -295,8 +300,8 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
   abstract process(
     input: I,
     context: Context,
-    options?: AgentCallOptions,
-  ): AgentProcessResult<O | TransferAgentOutput>;
+    options?: AgentInvokeOptions,
+  ): PromiseOrValue<AgentProcessResult<O>>;
 
   async shutdown() {
     this.memory?.detach();
@@ -307,7 +312,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
   }
 }
 
-export type AgentResponse<T> = T | AgentResponseStream<T>;
+export type AgentResponse<T> = T | TransferAgentOutput | AgentResponseStream<T>;
 
 export type AgentResponseStream<T> = ReadableStream<AgentResponseChunk<T>>;
 
@@ -323,21 +328,22 @@ export interface AgentResponseDelta<T> {
       | Partial<{
           [key in keyof T as Extract<T[key], string> extends string ? key : never]: string;
         }>
-      | {
+      | Partial<{
           [key: string]: string;
-        };
-    json?: Partial<T>;
+        }>;
+    json?: Partial<T | TransferAgentOutput>;
   };
 }
 
 export type AgentProcessAsyncGenerator<O extends Message> = AsyncGenerator<
   AgentResponseChunk<O>,
-  Partial<O> | undefined | void
+  Partial<O | TransferAgentOutput> | undefined | void
 >;
 
 export type AgentProcessResult<O extends Message> =
-  | Promise<AgentResponse<O>>
-  | AgentProcessAsyncGenerator<O>;
+  | AgentResponse<O>
+  | AgentProcessAsyncGenerator<O>
+  | Agent;
 
 export type AgentInputOutputSchema<I extends Message = Message> =
   | ZodType<I>
@@ -386,25 +392,16 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
 
   fn: FunctionAgentFn<I, O>;
 
-  async process(
-    input: I,
-    context: Context,
-    options?: AgentCallOptions,
-  ): Promise<AgentResponse<O | TransferAgentOutput>> {
-    let result: O | TransferAgentOutput | Agent = await this.fn(input, context);
-
-    if (result instanceof Agent) {
-      result = transferToAgentOutput(result);
-    }
-
-    return options?.streaming ? objectToAgentResponseStream(result) : result;
+  process(input: I, context: Context) {
+    return this.fn(input, context);
   }
 }
 
-export type FunctionAgentFn<I extends Message = Message, O extends Message = Message> = (
+// biome-ignore lint/suspicious/noExplicitAny: make it easier to use
+export type FunctionAgentFn<I extends Message = any, O extends Message = any> = (
   input: I,
   context: Context,
-) => O | Promise<O> | Agent | Promise<Agent>;
+) => PromiseOrValue<AgentProcessResult<O>>;
 
 function functionToAgent<I extends Message, O extends Message>(
   agent: FunctionAgentFn<I, O>,

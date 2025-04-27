@@ -92,7 +92,7 @@ The following example demonstrates how to build a code-execution workflow:
 
 ```typescript
 import assert from "node:assert";
-import { AIAgent, ExecutionEngine, FunctionAgent } from "@aigne/core";
+import { AIAgent, AIGNE, FunctionAgent } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { z } from "zod";
 
@@ -123,12 +123,12 @@ const coder = AIAgent.from({
 You are a proficient coder. You write code to solve problems.
 Work with the sandbox to execute your code.
 `,
-  tools: [sandbox],
+  skills: [sandbox],
 });
 
-const engine = new ExecutionEngine({ model });
+const aigne = new AIGNE({ model });
 
-const result = await engine.call(coder, "10! = ?");
+const result = await aigne.invoke(coder, "10! = ?");
 console.log(result);
 // Output:
 // {

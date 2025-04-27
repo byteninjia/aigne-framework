@@ -1,12 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
-import {
-  AIAgent,
-  type AgentCallOptions,
-  ChatModel,
-  ExecutionEngine,
-  type Message,
-} from "@aigne/core";
+import { AIAgent, AIGNE, type AgentInvokeOptions, ChatModel, type Message } from "@aigne/core";
 import { AIGNEClient } from "@aigne/core/client/client.js";
 import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { AIGNEServer } from "@aigne/core/server/server";
@@ -23,7 +17,7 @@ import { Hono } from "hono";
 
 interface Server {
   url: string;
-  aigne: ExecutionEngine;
+  aigne: AIGNE;
   close: () => unknown;
 }
 
@@ -43,7 +37,7 @@ const servers: { name: string; createServer: () => Promise<Server> }[] = [
   },
   { name: "hono", createServer: createHonoServer },
 ];
-const options: AgentCallOptions[] = [{ streaming: true }, { streaming: false }];
+const options: AgentInvokeOptions[] = [{ streaming: true }, { streaming: false }];
 
 const table = servers.flatMap((server) =>
   options.map((options) => [options, server.name, server.createServer] as const),
@@ -61,7 +55,7 @@ test.each(table)(
       );
 
       const client = new AIGNEClient({ url });
-      const response = await client.call("chat", { $message: "hello" }, options);
+      const response = await client.invoke("chat", { $message: "hello" }, options);
 
       if (options.streaming) {
         assert(response instanceof ReadableStream);
@@ -94,7 +88,7 @@ test.each(table)(
       );
 
       const client = new AIGNEClient({ url });
-      const response = client.call("chat", { $message: "hello" }, options);
+      const response = client.invoke("chat", { $message: "hello" }, options);
 
       if (options.streaming) {
         const stream = await response;
@@ -117,7 +111,7 @@ test.each(table)(
     try {
       const client = new AIGNEClient({ url });
 
-      const response = client.call("not-exists-agent", {}, options);
+      const response = client.invoke("not-exists-agent", {}, options);
 
       expect(response).rejects.toThrow("status 404: Agent not-exists-agent not found");
     } finally {
@@ -134,7 +128,7 @@ test.each(table)(
     try {
       const client = new AIGNEClient({ url });
 
-      const response = client.call("chat", "invalid body" as unknown as Message, {
+      const response = client.invoke("chat", "invalid body" as unknown as Message, {
         ...options,
         fetchOptions: { headers: { "Content-Type": "text/plain" } },
       });
@@ -156,10 +150,10 @@ test.each(table)(
     try {
       const client = new AIGNEClient({ url });
 
-      const response = client.call("chat", [] as unknown as Message, options);
+      const response = client.invoke("chat", [] as unknown as Message, options);
 
       expect(response).rejects.toThrow(
-        "status 400: Call agent chat check arguments error: input: Expected object, received array",
+        "status 400: Invoke agent chat check arguments error: input: Expected object, received array",
       );
     } finally {
       await close();
@@ -177,7 +171,7 @@ async function createExpressServer({
   passBodyDirectly?: boolean;
 } = {}) {
   const port = await detect();
-  const url = `http://localhost:${port}/aigne/call`;
+  const url = `http://localhost:${port}/aigne/invoke`;
 
   const server = express();
 
@@ -187,8 +181,8 @@ async function createExpressServer({
   const aigne = await createAIGNE();
   const aigneServer = new AIGNEServer(aigne);
 
-  server.post("/aigne/call", async (req, res) => {
-    await aigneServer.call(passBodyDirectly ? req.body : req, res);
+  server.post("/aigne/invoke", async (req, res) => {
+    await aigneServer.invoke(passBodyDirectly ? req.body : req, res);
   });
 
   const httpServer = server.listen(port);
@@ -205,15 +199,15 @@ async function createExpressServer({
 
 async function createHonoServer() {
   const port = await detect();
-  const url = `http://localhost:${port}/aigne/call`;
+  const url = `http://localhost:${port}/aigne/invoke`;
 
   const honoApp = new Hono();
 
   const aigne = await createAIGNE();
   const aigneServer = new AIGNEServer(aigne);
 
-  honoApp.post("/aigne/call", async (c) => {
-    return aigneServer.call(c.req.raw);
+  honoApp.post("/aigne/invoke", async (c) => {
+    return aigneServer.invoke(c.req.raw);
   });
 
   const server = serve({ port, fetch: honoApp.fetch });
@@ -234,5 +228,5 @@ async function createAIGNE() {
     name: "chat",
   });
 
-  return new ExecutionEngine({ model, agents: [chat] });
+  return new AIGNE({ model, agents: [chat] });
 }

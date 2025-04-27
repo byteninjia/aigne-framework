@@ -1,34 +1,34 @@
-# Execution Engine API Reference
+# AIGNE API Reference
 
-[中文](./execution-engine-api.zh.md) | **English**
+[中文](./aigne-api.zh.md) | **English**
 
-The Execution Engine is a core component of the AIGNE framework, responsible for coordinating interactions between Agents and executing workflows. It provides a unified interface for running single or multiple Agents and manages message passing between them.
+AIGNE is a core component of the AIGNE framework, responsible for coordinating interactions between Agents and executing workflows. It provides a unified interface for running single or multiple Agents and manages message passing between them.
 
-## ExecutionEngine Class
+## AIGNE Class
 
-`ExecutionEngine` inherits from `EventEmitter` and provides an execution environment for Agents. It creates an execution context for each operation.
+`AIGNE` inherits from `EventEmitter` and provides an execution environment for Agents. It creates an execution context for each operation.
 
 ### Constructor
 
 ```typescript
-constructor(options?: ExecutionEngineOptions)
+constructor(options?: AIGNEOptions)
 ```
 
 #### Parameters
 
 - `model`: `ChatModel` - Default Chat model instance
-- `tools`: `Agent[]` - List of globally available tools
+- `skills`: `Agent[]` - List of globally available skills
 - `agents`: `Agent[]` - List of Agents to add at initialization
 - `limits`: `ContextLimits` - Context limits configuration
   - `maxTokens`: `number` - Maximum number of tokens allowed to be processed
-  - `maxAgentCalls`: `number` - Maximum number of agent calls allowed
+  - `maxAgentInvokes`: `number` - Maximum number of agent invocations allowed
   - `timeout`: `number` - Execution timeout in milliseconds
 
 ### Methods
 
 #### `addAgent`
 
-Adds one or more Agents to the execution engine.
+Adds one or more Agents to the AIGNE.
 
 ```typescript
 addAgent(...agents: Agent[])
@@ -86,72 +86,72 @@ unsubscribe(topic: string, listener: (message: AgentOutput) => void)
 - `topic`: `string` - Topic to unsubscribe from
 - `listener`: `(message: AgentOutput) => void` - Previously registered callback function
 
-#### `call`
+#### `invoke`
 
-Calls an agent with a message and returns the output. This method has multiple overloads, each with a different purpose.
+Invokes an agent with a message and returns the output. This method has multiple overloads, each with a different purpose.
 
 ```typescript
-// Create a user agent to consistently call an agent
-// Returns a UserAgent instance for continuous interaction with the execution engine
+// Create a user agent to consistently invoke an agent
+// Returns a UserAgent instance for continuous interaction with the AIGNE
 // Suitable for scenarios requiring multi-turn dialogue or continuous interaction
-call<I extends Message, O extends Message>(agent: Runnable<I, O>): UserAgent<I, O>;
+invoke<I extends Message, O extends Message>(agent: Agent<I, O>): UserAgent<I, O>;
 
-// Call an agent with a message
-// Calls the specified agent with the provided message
+// Invoke an agent with a message
+// Invokes the specified agent with the provided message
 // Returns the output of the agent
 // Suitable for scenarios where a single interaction is needed
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options?: { streaming?: false }
 ): Promise<O>;
 
-// Call an agent with a message and return a stream of response chunks
-// Calls the specified agent with the provided message
+// Invoke an agent with a message and return a stream of response chunks
+// Invokes the specified agent with the provided message
 // Returns a stream of response chunks as they become available
 // Suitable for real-time processing or displaying incremental results
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { streaming: true }
 ): Promise<AgentResponseStream<O>>;
 
-// Call an agent with a message and return the output and the active agent
-// Calls the specified agent with the provided message
+// Invoke an agent with a message and return the output and the active agent
+// Invokes the specified agent with the provided message
 // Returns the output of the agent and the final active agent
 // Suitable for scenarios where the active agent needs to be tracked
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { returnActiveAgent: true; streaming?: false },
-): Promise<[O, Runnable]>;
+): Promise<[O, Agent]>;
 
-// Call an agent with a message and return a stream of response chunks and the active agent promise
-// Calls the specified agent with the provided message
+// Invoke an agent with a message and return a stream of response chunks and the active agent promise
+// Invokes the specified agent with the provided message
 // Returns a stream of response chunks and a promise that resolves to the final active agent
 // Suitable for real-time processing while tracking the active agent
-call<I extends Message, O extends Message>(
-  agent: Runnable<I, O>,
+invoke<I extends Message, O extends Message>(
+  agent: Agent<I, O>,
   message: I | string,
   options: { returnActiveAgent: true; streaming: true },
-): Promise<[AgentResponseStream<O>, Promise<Runnable>]>;
+): Promise<[AgentResponseStream<O>, Promise<Agent>]>;
 ```
 
 ##### Parameters
 
-- `agent`: `Runnable<I, O>` - Agent or function to call
+- `agent`: `Agent<I, O>` - Agent to invoke
 - `message`: `I | string` - Message to pass to the agent
-- `options`: `{ returnActiveAgent?: boolean }` - Options for the call
+- `options`: `{ returnActiveAgent?: boolean }` - Options for the invocation
 
 ##### Returns
 
 - `UserAgent<I, O>` - When only the agent parameter is provided, returns a UserAgent instance for continuous interaction
 - `Promise<O>` - When the message parameter is provided, returns the processing result
-- `Promise<[O, Runnable]>` - When the options parameter is provided, returns the processing result and the active agent
+- `Promise<[O, Agent]>` - When the options parameter is provided, returns the processing result and the active agent
 
 #### `shutdown`
 
-Shuts down the execution engine and releases resources.
+Shuts down the AIGNE and releases resources.
 
 ```typescript
 async shutdown()
@@ -159,51 +159,12 @@ async shutdown()
 
 ## Utility Functions
 
-### `sequential`
-
-Creates a function that executes multiple Agents sequentially.
-
-```typescript
-function sequential(...agents: [Runnable, ...Runnable[]]): FunctionAgentFn
-```
-
-#### Parameters
-
-- `agents`: `[Runnable, ...Runnable[]]` - List of Agents to execute sequentially
-
-#### Returns
-
-- `FunctionAgentFn` - Returns a function that executes the specified Agents sequentially and merges their outputs
-
-### `parallel`
-
-Creates a function that executes multiple Agents in parallel.
-
-```typescript
-function parallel(...agents: [Runnable, ...Runnable[]]): FunctionAgentFn
-```
-
-#### Parameters
-
-- `agents`: `[Runnable, ...Runnable[]]` - List of Agents to execute in parallel
-
-#### Returns
-
-- `FunctionAgentFn` - Returns a function that executes the specified Agents in parallel and merges their outputs
 
 ## Related Types
 
-### `Runnable`
-
-Defines the type of entities that can be run.
-
-```typescript
-type Runnable = Agent | FunctionAgentFn;
-```
-
 ### `UserAgent`
 
-Represents the user's proxy in the execution engine, used for continuous interaction sessions.
+Represents the user's proxy in the AIGNE, used for continuous interaction sessions.
 
 ```typescript
 class UserAgent<I extends Message = Message, O extends Message = Message> extends Agent<I, O> {
@@ -239,7 +200,7 @@ interface UserAgentOptions<I extends Message = Message, O extends Message = Mess
 
 ## Message Passing Mechanism
 
-The execution engine uses a publish-subscribe pattern to handle communication between Agents. Each Agent can define:
+The AIGNE uses a publish-subscribe pattern to handle communication between Agents. Each Agent can define:
 
 1. `subscribeTopic`: The topics the Agent listens to
 2. `publishTopic`: The topics to which the Agent publishes results
@@ -252,21 +213,21 @@ Predefined special topics:
 
 ## Examples
 
-### Using Stream Response with Execution Engine
+### Using Stream Response with AIGNE
 
 ```typescript
-import { ExecutionEngine, AIAgent } from "@aigne/core";
+import { AIGNE, AIAgent } from "@aigne/core";
 import { mergeAgentResponseChunk } from "@aigne/core/utils/stream-utils.js";
 
-const engine = new ExecutionEngine();
+const aigne = new AIGNE();
 
 const agent = AIAgent.from({
   model,
   instructions: "..."
 })
 
-// Call with streaming enabled
-const stream = await engine.call(agent, "Hello, tell me about streaming", { streaming: true });
+// Invoke with streaming enabled
+const stream = await aigne.invoke(agent, "Hello, tell me about streaming", { streaming: true });
 
 const reader = stream.getReader();
 const result = {};
@@ -282,7 +243,7 @@ while (true) {
 console.log("Final result:", result);
 
 // Get both stream and active agent (for more complex workflows)
-const [agentStream, activeAgentPromise] = await engine.call(
+const [agentStream, activeAgentPromise] = await aigne.invoke(
   assistant,
   "Hello, please recommend some books",
   { streaming: true, returnActiveAgent: true }
@@ -298,7 +259,7 @@ console.log("The active agent is:", activeAgent.name);
 ### Basic Usage
 
 ```typescript
-import { ExecutionEngine, AIAgent, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -312,31 +273,31 @@ const assistant = AIAgent.from({
   instructions: "You are a friendly, helpful assistant."
 });
 
-// Create execution engine
-const engine = new ExecutionEngine({ model });
+// Create AIGNE
+const aigne = new AIGNE({ model });
 
-// Method 1: Call directly and get results
-const result = await engine.call(assistant, "Hello, please tell me today's date");
+// Method 1: Invoke directly and get results
+const result = await aigne.invoke(assistant, "Hello, please tell me today's date");
 console.log(result);
 
 // Method 2: Create interactive session
-const userAgent = engine.call(assistant);
+const userAgent = aigne.invoke(assistant);
 
 // Send messages and get replies
-const response1 = await userAgent.call("Hello!");
+const response1 = await userAgent.invoke("Hello!");
 console.log(response1);
 
-const response2 = await userAgent.call("Can you help me write a poem?");
+const response2 = await userAgent.invoke("Can you help me write a poem?");
 console.log(response2);
 
-// Shut down the execution engine
-await engine.shutdown();
+// Shut down the AIGNE
+await aigne.shutdown();
 ```
 
 ### Sequential Execution of Multiple Agents
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, sequential, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, FunctionAgent, TeamAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -366,12 +327,15 @@ const summarizer = AIAgent.from({
   instructions: "Your task is to summarize the analysis results into concise points."
 });
 
-// Create execution engine
-const engine = new ExecutionEngine({ model });
+// Create AIGNE
+const aigne = new AIGNE({ model });
 
 // Execute Agents sequentially
-const result = await engine.call(
-  sequential(dataPrep, analyzer, summarizer),
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [dataPrep, analyzer, summarizer],
+    mode: ProcessMode.sequential,
+  }),
   { data: [10, 20, 30, 40, 50] }
 );
 
@@ -381,7 +345,7 @@ console.log(result);
 ### Parallel Execution of Multiple Agents
 
 ```typescript
-import { ExecutionEngine, AIAgent, parallel, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, TeamAgent, ProcessMode, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -404,12 +368,15 @@ const storyteller = AIAgent.from({
   outputKey: "story"
 });
 
-// Create execution engine
-const engine = new ExecutionEngine({ model });
+// Create AIGNE
+const aigne = new AIGNE({ model });
 
 // Execute Agents in parallel
-const result = await engine.call(
-  parallel(poet, storyteller),
+const result = await aigne.invoke(
+  TeamAgent.from({
+    skills: [poet, storyteller],
+    mode: ProcessMode.parallel,
+  }),
   { topic: "Moon" }
 );
 
@@ -420,7 +387,7 @@ console.log("Story:", result.story);
 ### Using Publish-Subscribe Pattern
 
 ```typescript
-import { ExecutionEngine, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
+import { AIGNE, AIAgent, FunctionAgent, OpenAIChatModel } from "@aigne/core";
 
 const model = new OpenAIChatModel({
   apiKey: process.env.OPENAI_API_KEY,
@@ -433,7 +400,7 @@ const weatherAgent = FunctionAgent.from({
   subscribeTopic: "weather.request",
   publishTopic: "weather.response",
   fn: async (input) => {
-    // In a real application, this would call a weather API
+    // In a real application, this would invoke a weather API
     return {
       city: input.city,
       temperature: 24,
@@ -451,14 +418,14 @@ const travelAgent = AIAgent.from({
   instructions: "Based on the provided weather information, provide travel advice."
 });
 
-// Create execution engine and add Agents
-const engine = new ExecutionEngine();
-engine.addAgent(weatherAgent, travelAgent);
+// Create AIGNE and add Agents
+const aigne = new AIGNE();
+aigne.addAgent(weatherAgent, travelAgent);
 
 // Subscribe to final results
-engine.subscribe("travel.response", (response) => {
+aigne.subscribe("travel.response", (response) => {
   console.log("Travel advice:", response);
 });
 
 // Publish initial request
-engine.publish("weather.request", { city: "Beijing" });
+aigne.publish("weather.request", { city: "Beijing" });
