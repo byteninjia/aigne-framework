@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   AIAgent,
+  AIAgentToolChoice,
   AgentMemory,
   FunctionAgent,
   MESSAGE_KEY,
@@ -93,7 +94,7 @@ test("PromptBuilder should build skills correctly", async () => {
   const skill = FunctionAgent.from({
     name: "TestSkill",
     description: "Test skill description",
-    fn: () => ({}),
+    process: () => ({}),
     inputSchema: z.object({
       name: z.string(),
       age: z.number().optional(),
@@ -141,7 +142,7 @@ test("PromptBuilder should unique skills correctly", async () => {
   const skill = FunctionAgent.from({
     name: "TestSkill",
     description: "Test skill description",
-    fn: () => ({}),
+    process: () => ({}),
   });
 
   const agent = AIAgent.from({
@@ -159,14 +160,14 @@ test("PromptBuilder should build toolChoice with router mode correctly", async (
   const skill = FunctionAgent.from({
     name: "TestSkill",
     description: "Test skill description",
-    fn: () => ({}),
+    process: () => ({}),
   });
 
   const agent = AIAgent.from({
     name: "TestAgent",
     instructions: "Test instructions",
     skills: [skill],
-    toolChoice: "router",
+    toolChoice: AIAgentToolChoice.router,
   });
 
   const prompt = await agent.instructions.build({ input: {}, agent });
