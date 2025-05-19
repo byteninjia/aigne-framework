@@ -347,20 +347,22 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
           if (!tool) throw new Error(`Tool not found: ${call.function.name}`);
 
           // NOTE: should pass both arguments (model generated) and input (user provided) to the tool
-          const output = await context
-            .invoke(tool, { ...input, ...call.function.arguments }, { disableTransfer: true })
-            .catch((error) => {
-              if (!this.catchToolsError) {
-                return Promise.reject(error);
-              }
+          const output = await this.invokeSkill(
+            tool,
+            { ...input, ...call.function.arguments },
+            context,
+          ).catch((error) => {
+            if (!this.catchToolsError) {
+              return Promise.reject(error);
+            }
 
-              return {
-                isError: true,
-                error: {
-                  message: error.message,
-                },
-              };
-            });
+            return {
+              isError: true,
+              error: {
+                message: error.message,
+              },
+            };
+          });
 
           // NOTE: Return transfer output immediately
           if (isTransferAgentOutput(output)) {
@@ -439,7 +441,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     const stream = await context.invoke(
       tool,
       { ...call.function.arguments, ...input },
-      { streaming: true },
+      { streaming: true, sourceAgent: this },
     );
 
     yield* stream;
