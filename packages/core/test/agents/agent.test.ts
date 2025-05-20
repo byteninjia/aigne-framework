@@ -13,9 +13,9 @@ import {
   textDelta,
 } from "@aigne/core";
 import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent";
-import { OpenAIChatModel } from "@aigne/core/models/openai-chat-model.js";
 import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
 import { z } from "zod";
+import { OpenAIChatModel } from "../_mocks/mock-models.js";
 import { createToolCallResponse } from "../_utils/openai-like-utils.js";
 
 test("Custom agent", async () => {
