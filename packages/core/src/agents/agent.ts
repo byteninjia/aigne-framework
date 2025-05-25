@@ -675,7 +675,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * @param _ Input message (unused)
    * @param options Options for agent invocation
    */
-  protected preprocess(_: I, options: AgentInvokeOptions): PromiseOrValue<void> {
+  protected async preprocess(_: I, options: AgentInvokeOptions): Promise<void> {
     this.checkContextStatus(options);
     this.checkAgentInvokesUsage(options);
   }
@@ -748,14 +748,14 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * @param output Output message
    * @param options Options for agent invocation
    */
-  protected postprocess(input: I, output: O, options: AgentInvokeOptions): PromiseOrValue<void> {
+  protected async postprocess(input: I, output: O, options: AgentInvokeOptions): Promise<void> {
     this.checkContextStatus(options);
 
     this.publishToTopics(output, options);
 
     for (const memory of this.memories) {
       if (memory.autoUpdate) {
-        memory.record(
+        await memory.record(
           {
             content: [
               { role: "user", content: input },
@@ -993,7 +993,7 @@ export interface AgentResponseDelta<T> {
       | Partial<{
           [key: string]: string;
         }>;
-    json?: Partial<T | TransferAgentOutput>;
+    json?: Partial<T> | TransferAgentOutput;
   };
 }
 
@@ -1038,7 +1038,7 @@ export function jsonDelta<T extends Message>(
  */
 export type AgentProcessAsyncGenerator<O extends Message> = AsyncGenerator<
   AgentResponseChunk<O>,
-  Partial<O | TransferAgentOutput> | undefined | void
+  Partial<O> | TransferAgentOutput | undefined | void
 >;
 
 /**

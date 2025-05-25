@@ -153,7 +153,7 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
       );
 
       for await (const chunk of o) {
-        yield chunk;
+        yield chunk as AgentResponseChunk<O>;
         mergeAgentResponseChunk(output, chunk);
       }
       newAgents.push(await transferToAgent);
@@ -232,7 +232,8 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
           }
         }
 
-        if (!isEmpty(delta.json) || !isEmpty(text)) yield { delta: { ...delta, text } };
+        if (!isEmpty(delta.json) || !isEmpty(text))
+          yield { delta: { ...delta, text } } as AgentResponseChunk<O>;
       }
     }
 
