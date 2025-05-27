@@ -1,12 +1,7 @@
 import { joinURL } from "ufo";
 import type { DocNode } from "./generator.js";
+import type { PublishResult } from "./types.js";
 import { getComponentMountPoint } from "./utils/get-component-mount-point.js";
-
-interface PublishResult {
-  success: boolean;
-  docs?: unknown[];
-  error?: string;
-}
 
 export async function publisher(input: {
   data: {
@@ -41,14 +36,14 @@ export async function publisher(input: {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Failed to publish blog post: ${response.status} ${response.statusText} - ${errorText}`,
+        `Failed to publish docs post: ${response.status} ${response.statusText} - ${errorText}`,
       );
     }
 
     const result = await response.json();
     return { success: true, docs: result.docs };
   } catch (error) {
-    console.error("Error publishing blog post:", error);
+    console.error("Error publishing docs post:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
