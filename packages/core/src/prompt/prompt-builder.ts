@@ -1,8 +1,7 @@
-import { readFile } from "node:fs/promises";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
-import { Agent, type Message } from "../agents/agent.js";
+import { Agent, type AgentInvokeOptions, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
 import type {
   ChatModel,
@@ -13,10 +12,10 @@ import type {
   ChatModelInputToolChoice,
   ChatModelOptions,
 } from "../agents/chat-model.js";
-import type { Context } from "../aigne/context.js";
-import type { Memory, MemoryAgent } from "../memory/memory.js";
+import type { Memory } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
-import { isNil, orArrayToArray, unique } from "../utils/type-utils.js";
+import { nodejs } from "../utils/nodejs.js";
+import { isNil, unique } from "../utils/type-utils.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
 import {
   AgentMessageTemplate,
@@ -62,9 +61,7 @@ export interface PromptBuilderOptions {
   instructions?: string | ChatMessagesTemplate;
 }
 
-export interface PromptBuildOptions {
-  memory?: MemoryAgent | MemoryAgent[];
-  context: Context;
+export interface PromptBuildOptions extends AgentInvokeOptions {
   agent?: AIAgent;
   input?: Message;
   model?: ChatModel;
@@ -91,7 +88,7 @@ export class PromptBuilder {
   }
 
   private static async fromFile(path: string): Promise<PromptBuilder> {
-    const text = await readFile(path, "utf-8");
+    const text = await nodejs.fs.readFile(path, "utf-8");
     return PromptBuilder.from(text);
   }
 
@@ -148,13 +145,17 @@ export class PromptBuilder {
         : this.instructions
       )?.format(options.input) ?? [];
 
-    for (const memory of orArrayToArray(options.memory ?? options.agent?.memories)) {
-      const memories = (
-        await memory.retrieve({ search: input && getMessage(input) }, options.context)
-      )?.memories;
+    const memories: Pick<Memory, "content">[] = [];
 
-      if (memories?.length) messages.push(...this.convertMemoriesToMessages(memories, options));
+    if (options.agent) {
+      memories.push(...(await options.agent.retrieveMemories({ search: options.input }, options)));
     }
+
+    if (options.memories?.length) {
+      memories.push(...options.memories);
+    }
+
+    if (memories.length) messages.push(...this.convertMemoriesToMessages(memories, options));
 
     const content = input && getMessage(input);
     // add user input if it's not the same as the last message
@@ -166,7 +167,7 @@ export class PromptBuilder {
   }
 
   private convertMemoriesToMessages(
-    memories: Memory[],
+    memories: Pick<Memory, "content">[],
     options: PromptBuildOptions,
   ): ChatModelInputMessage[] {
     const str = stringify(memories.map((i) => i.content));

@@ -10,9 +10,9 @@ import {
   PromptBuilder,
   createMessage,
 } from "@aigne/core";
-import { DefaultMemory } from "@aigne/core/memory/default-memory/index.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { MockMemory } from "../_mocks/mock-memory.js";
 
 test("userInput function should return correct object", () => {
   const message = "Hello";
@@ -25,7 +25,7 @@ test("PromptBuilder should build messages correctly", async () => {
 
   const builder = PromptBuilder.from("Test instructions");
 
-  const memory = new DefaultMemory({});
+  const memory = new MockMemory({});
   await memory.record(
     {
       role: "agent",
@@ -36,8 +36,12 @@ test("PromptBuilder should build messages correctly", async () => {
     context,
   );
 
-  const prompt1 = await builder.build({
+  const agent = AIAgent.from({
     memory,
+  });
+
+  const prompt1 = await builder.build({
+    agent,
     input: createMessage("Hello"),
     context,
   });

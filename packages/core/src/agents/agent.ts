@@ -1,10 +1,12 @@
-import { inspect } from "node:util";
 import { ZodObject, type ZodType, z } from "zod";
 import type { Context, UserContext } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
-import type { MemoryAgent } from "../memory/memory.js";
-import { createMessage } from "../prompt/prompt-builder.js";
+import type { Memory, MemoryAgent } from "../memory/memory.js";
+import type { MemoryRecorderInput } from "../memory/recorder.js";
+import type { MemoryRetrieverInput } from "../memory/retriever.js";
+import { createMessage, getMessage } from "../prompt/prompt-builder.js";
 import { logger } from "../utils/logger.js";
+import { nodejs } from "../utils/nodejs.js";
 import {
   agentResponseStreamToObject,
   asyncGeneratorToReadableStream,
@@ -134,6 +136,11 @@ export interface AgentOptions<I extends Message = Message, O extends Message = M
    * One or more memory agents this agent can use
    */
   memory?: MemoryAgent | MemoryAgent[];
+
+  /**
+   * Maximum number of memory items to retrieve
+   */
+  maxRetrieveMemoryCount?: number;
 }
 
 export const agentOptionsSchema: ZodObject<{
@@ -151,6 +158,7 @@ export const agentOptionsSchema: ZodObject<{
   skills: z.array(z.union([z.custom<Agent>(), z.custom<FunctionAgentFn>()])).optional(),
   disableEvents: z.boolean().optional(),
   memory: z.union([z.custom<MemoryAgent>(), z.array(z.custom<MemoryAgent>())]).optional(),
+  maxRetrieveMemoryCount: z.number().optional(),
   hooks: z
     .object({
       onStart: z.custom<AgentHooks["onStart"]>().optional(),
@@ -190,6 +198,10 @@ export interface AgentInvokeOptions<U extends UserContext = UserContext> {
    * and returns the final JSON result
    */
   streaming?: boolean;
+
+  userContext?: U;
+
+  memories?: Pick<Memory, "content">[];
 }
 
 /**
@@ -237,6 +249,8 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
       this.memories.push(options.memory);
     }
 
+    this.maxRetrieveMemoryCount = options.maxRetrieveMemoryCount;
+
     this.hooks = options.hooks ?? {};
     this.guideRails = options.guideRails;
   }
@@ -245,6 +259,11 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    * List of memories this agent can use
    */
   readonly memories: MemoryAgent[] = [];
+
+  /**
+   * Maximum number of memory items to retrieve
+   */
+  maxRetrieveMemoryCount?: number;
 
   /**
    * Lifecycle hooks for agent processing.
@@ -450,6 +469,37 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     return import("../aigne/context.js").then((m) => new m.AIGNEContext());
   }
 
+  async retrieveMemories(
+    input: Pick<MemoryRetrieverInput, "limit"> & { search?: Message | string },
+    options: Pick<AgentInvokeOptions, "context">,
+  ) {
+    const memories: Pick<Memory, "content">[] = [];
+
+    for (const memory of this.memories) {
+      const ms = (
+        await memory.retrieve(
+          {
+            ...input,
+            search: typeof input === "string" ? input : input && getMessage(input),
+            limit: input.limit ?? this.maxRetrieveMemoryCount,
+          },
+          options.context,
+        )
+      ).memories;
+      memories.push(...ms);
+    }
+
+    return memories;
+  }
+
+  async recordMemories(input: MemoryRecorderInput, options: Pick<AgentInvokeOptions, "context">) {
+    for (const memory of this.memories) {
+      if (memory.autoUpdate) {
+        await memory.record(input, options.context);
+      }
+    }
+  }
+
   /**
    * Invoke the agent with regular (non-streaming) response
    *
@@ -508,6 +558,10 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
       ...options,
       context: options.context ?? (await this.newDefaultContext()),
     };
+
+    if (options.userContext) {
+      Object.assign(opts.context.userContext, options.userContext);
+    }
 
     const message = typeof input === "string" ? (createMessage(input) as I) : input;
 
@@ -753,19 +807,15 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
 
     this.publishToTopics(output, options);
 
-    for (const memory of this.memories) {
-      if (memory.autoUpdate) {
-        await memory.record(
-          {
-            content: [
-              { role: "user", content: input },
-              { role: "agent", content: replaceTransferAgentToName(output), source: this.name },
-            ],
-          },
-          options.context,
-        );
-      }
-    }
+    await this.recordMemories(
+      {
+        content: [
+          { role: "user", content: input },
+          { role: "agent", content: replaceTransferAgentToName(output), source: this.name },
+        ],
+      },
+      options,
+    );
   }
 
   protected async publishToTopics(output: Message, options: AgentInvokeOptions) {
@@ -845,7 +895,7 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
    *
    * @returns Agent name
    */
-  [inspect.custom]() {
+  [nodejs.customInspect]() {
     return this.name;
   }
 
