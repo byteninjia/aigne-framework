@@ -1,6 +1,6 @@
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import { ZodObject, type ZodType, z } from "zod";
-import type { Context, UserContext } from "../aigne/context.js";
+import type { AgentEvent, Context, UserContext } from "../aigne/context.js";
 import type { MessagePayload, Unsubscribe } from "../aigne/message-queue.js";
 import type { Memory, MemoryAgent } from "../memory/memory.js";
 import type { MemoryRecorderInput } from "../memory/recorder.js";
@@ -593,21 +593,18 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
             ? response
             : isAsyncGenerator(response)
               ? asyncGeneratorToReadableStream(response)
-              : objectToAgentResponseStream(response);
+              : objectToAgentResponseStream(response as O);
 
         return this.checkResponseByGuideRails(
           message,
-          onAgentResponseStreamEnd(
-            stream,
-            async (result) => {
+          onAgentResponseStreamEnd(stream, {
+            onResult: async (result) => {
               return await this.processAgentOutput(parsedInput, result, opts);
             },
-            {
-              errorCallback: async (error) => {
-                return await this.processAgentError(message, error, opts);
-              },
+            onError: async (error) => {
+              return await this.processAgentError(message, error, opts);
             },
-          ),
+          }),
           opts,
         );
       }
@@ -749,14 +746,16 @@ export abstract class Agent<I extends Message = Message, O extends Message = Mes
     const result = await output;
 
     if (result instanceof ReadableStream) {
-      return onAgentResponseStreamEnd(result, async (result) => {
-        const error = await this.runGuideRails(input, result, options);
-        if (error) {
-          return {
-            ...(await this.onGuideRailError(error)),
-            $status: "GuideRailError",
-          } as unknown as O;
-        }
+      return onAgentResponseStreamEnd(result, {
+        onResult: async (result) => {
+          const error = await this.runGuideRails(input, result, options);
+          if (error) {
+            return {
+              ...(await this.onGuideRailError(error)),
+              $status: "GuideRailError",
+            } as unknown as O;
+          }
+        },
       });
     }
 
@@ -1017,7 +1016,7 @@ export type AgentResponseStream<T> = ReadableStream<AgentResponseChunk<T>>;
  *
  * @template T Response data type
  */
-export type AgentResponseChunk<T> = AgentResponseDelta<T>;
+export type AgentResponseChunk<T> = AgentResponseDelta<T> | AgentResponseProgress;
 
 /**
  * Check if a response chunk is empty
@@ -1027,7 +1026,7 @@ export type AgentResponseChunk<T> = AgentResponseDelta<T>;
  * @returns True if the chunk is empty
  */
 export function isEmptyChunk<T>(chunk: AgentResponseChunk<T>): boolean {
-  return isEmpty(chunk.delta.json) && isEmpty(chunk.delta.text);
+  return isAgentResponseDelta(chunk) && isEmpty(chunk.delta.json) && isEmpty(chunk.delta.text);
 }
 
 /**
@@ -1050,6 +1049,36 @@ export interface AgentResponseDelta<T> {
         }>;
     json?: Partial<T> | TransferAgentOutput;
   };
+}
+
+export function isAgentResponseDelta<T>(
+  chunk: AgentResponseChunk<T>,
+): chunk is AgentResponseDelta<T> {
+  return "delta" in chunk;
+}
+
+export interface AgentResponseProgress {
+  progress: (
+    | {
+        event: "agentStarted";
+        input: Message;
+      }
+    | {
+        event: "agentSucceed";
+        output: Message;
+      }
+    | {
+        event: "agentFailed";
+        error: Error;
+      }
+  ) &
+    Omit<AgentEvent, "agent"> & { agent: { name: string } };
+}
+
+export function isAgentResponseProgress<T>(
+  chunk: AgentResponseChunk<T>,
+): chunk is AgentResponseProgress {
+  return "progress" in chunk;
 }
 
 /**
@@ -1247,7 +1276,6 @@ export class FunctionAgent<I extends Message = Message, O extends Message = Mess
  * @param context Execution context
  * @returns Processing result, can be synchronous or asynchronous
  */
-// biome-ignore lint/suspicious/noExplicitAny: make it easier to use
 export type FunctionAgentFn<I extends Message = any, O extends Message = any> = (
   input: I,
   options: AgentInvokeOptions,

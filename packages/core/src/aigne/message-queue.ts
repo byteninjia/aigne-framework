@@ -67,7 +67,6 @@ export type MessageQueueListener = (message: MessagePayload) => void;
 export type Unsubscribe = () => void;
 
 interface MessageQueueEventMap extends EventMap {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   [key: string]: any[];
 }
 

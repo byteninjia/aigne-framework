@@ -30,6 +30,10 @@ export const invokePayloadSchema = z.object({
         .boolean()
         .nullish()
         .transform((v) => v ?? undefined),
+      returnProgressChunks: z
+        .boolean()
+        .nullish()
+        .transform((v) => v ?? undefined),
       userContext: z
         .record(z.string(), z.unknown())
         .nullish()
@@ -61,7 +65,8 @@ export interface AIGNEHTTPServerOptions {
 }
 
 export interface AIGNEHTTPServerInvokeOptions<U extends UserContext = UserContext>
-  extends Pick<AgentInvokeOptions<U>, "userContext" | "memories"> {}
+  extends Pick<AgentInvokeOptions<U>, "userContext" | "memories">,
+    Pick<InvokeOptions, "returnProgressChunks"> {}
 
 /**
  * AIGNEHTTPServer provides HTTP API access to AIGNE capabilities.
@@ -81,11 +86,11 @@ export class AIGNEHTTPServer {
   /**
    * Creates a new AIGNEServer instance.
    *
-   * @param engine - The AIGNE engine instance that will process agent invocations
+   * @param aigne - The AIGNE instance that will process agent invocations
    * @param options - Configuration options for the server
    */
   constructor(
-    public engine: AIGNE,
+    public aigne: AIGNE,
     public options?: AIGNEHTTPServerOptions,
   ) {}
 
@@ -163,7 +168,7 @@ export class AIGNEHTTPServer {
     request: Record<string, unknown> | Request | IncomingMessage,
     options: AIGNEHTTPServerInvokeOptions = {},
   ): Promise<Response> {
-    const { engine } = this;
+    const { aigne } = this;
 
     try {
       const payload = await this._prepareInput(request);
@@ -177,22 +182,23 @@ export class AIGNEHTTPServer {
         (error) => new ServerError(400, error.message),
       );
 
-      const agent = engine.agents[agentName];
+      const agent = aigne.agents[agentName];
       if (!agent) throw new ServerError(404, `Agent ${agentName} not found`);
 
       const mergedOptions: InvokeOptions = {
+        returnProgressChunks: opts.returnProgressChunks,
         userContext: { ...opts.userContext, ...options.userContext },
         memories: [...(opts.memories ?? []), ...(options.memories ?? [])],
       };
 
       if (!streaming) {
-        const result = await engine.invoke(agent, input, mergedOptions);
+        const result = await aigne.invoke(agent, input, mergedOptions);
         return new Response(JSON.stringify(result), {
           headers: { "Content-Type": "application/json" },
         });
       }
 
-      const stream = await engine.invoke(agent, input, {
+      const stream = await aigne.invoke(agent, input, {
         ...mergedOptions,
         returnActiveAgent: false,
         streaming: true,

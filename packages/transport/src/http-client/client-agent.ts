@@ -51,7 +51,7 @@ export class ClientAgent<I extends Message = Message, O extends Message = Messag
       { ...options, context: this.client },
     );
 
-    const result = await this.client._invoke(this.name, input, {
+    const result = await this.client._invoke<I, O>(this.name, input, {
       ...options,
       returnActiveAgent: false,
       memories,
@@ -64,11 +64,13 @@ export class ClientAgent<I extends Message = Message, O extends Message = Messag
       return result;
     }
 
-    return onAgentResponseStreamEnd(result, async (result) => {
-      await this.postprocess(createMessage(input) as I, result as O, {
-        ...options,
-        context: this.client,
-      });
+    return onAgentResponseStreamEnd(result, {
+      onResult: async (result) => {
+        await this.postprocess(createMessage(input) as I, result as O, {
+          ...options,
+          context: this.client,
+        });
+      },
     });
   }
 

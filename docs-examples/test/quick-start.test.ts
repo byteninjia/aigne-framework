@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
-import { AIAgent, AIGNE } from "@aigne/core";
+import { AIAgent, AIGNE, isAgentResponseDelta } from "@aigne/core";
 import { arrayToAgentProcessAsyncGenerator } from "@aigne/core/utils/stream-utils.js";
 import { OpenAIChatModel } from "@aigne/openai";
 
@@ -47,7 +47,8 @@ test("Example quick start: basic", async () => {
   let response = "";
   for await (const chunk of stream) {
     console.log(chunk);
-    if (chunk.delta.text?.$message) response += chunk.delta.text.$message;
+    if (isAgentResponseDelta(chunk) && chunk.delta.text?.$message)
+      response += chunk.delta.text.$message;
   }
   console.log(response);
   // Output:  "AIGNE is a platform for building AI agents."

@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import { textDelta } from "@aigne/core";
+import { isAgentResponseDelta, textDelta } from "@aigne/core";
 import { createMockEventStream } from "@aigne/test-utils/utils/event-stream.js";
 import {
   COMMON_RESPONSE_FORMAT,
@@ -90,9 +90,11 @@ test("X.AI chat model with streaming using async generator", async () => {
   const json = {};
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
-    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+      if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    }
   }
 
   console.log(fullText); // Output: "I'm Grok, an AI assistant from X.AI. I'm here to assist with a touch of humor and wit!"

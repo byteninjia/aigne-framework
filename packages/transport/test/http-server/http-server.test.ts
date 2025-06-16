@@ -1,7 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
 import assert from "node:assert";
 import { AIAgent, AIGNE, ChatModel } from "@aigne/core";
-import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils";
+import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
 import { AIGNEHTTPClient } from "@aigne/transport/http-client/index.js";
 import { AIGNEHTTPServer } from "@aigne/transport/http-server/index.js";
 import { serve } from "bun";

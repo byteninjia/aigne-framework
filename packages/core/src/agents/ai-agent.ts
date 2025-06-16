@@ -10,6 +10,7 @@ import {
   type AgentResponseStream,
   type Message,
   agentOptionsSchema,
+  isAgentResponseDelta,
 } from "./agent.js";
 import {
   ChatModel,
@@ -297,8 +298,7 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
     const toolsMap = new Map<string, Agent>(toolAgents?.map((i) => [i.name, i]));
 
     if (this.toolChoice === "router") {
-      yield* this._processRouter(input, model, modelInput, options, toolsMap);
-      return;
+      return yield* this._processRouter(input, model, modelInput, options, toolsMap);
     }
 
     const toolCallMessages: ChatModelInputMessage[] = [];
@@ -314,12 +314,14 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
       );
 
       for await (const value of stream) {
-        if (value.delta.text?.text) {
-          yield { delta: { text: { [outputKey]: value.delta.text.text } } };
-        }
+        if (isAgentResponseDelta(value)) {
+          if (value.delta.text?.text) {
+            yield { delta: { text: { [outputKey]: value.delta.text.text } } };
+          }
 
-        if (value.delta.json) {
-          Object.assign(modelOutput, value.delta.json);
+          if (value.delta.json) {
+            Object.assign(modelOutput, value.delta.json);
+          }
         }
       }
 
@@ -434,6 +436,6 @@ export class AIAgent<I extends Message = Message, O extends Message = Message> e
       { streaming: true, sourceAgent: this },
     );
 
-    yield* stream as AgentResponseStream<O>;
+    return yield* stream as AgentResponseStream<O>;
   }
 }

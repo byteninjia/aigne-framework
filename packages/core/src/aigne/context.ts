@@ -11,6 +11,7 @@ import {
   type AgentResponseStream,
   type FunctionAgentFn,
   type Message,
+  isAgentResponseDelta,
   isEmptyChunk,
 } from "../agents/agent.js";
 import type { ChatModel } from "../agents/chat-model.js";
@@ -22,10 +23,12 @@ import {
 import { UserAgent } from "../agents/user-agent.js";
 import type { Memory } from "../memory/memory.js";
 import { createMessage } from "../prompt/prompt-builder.js";
+import { AgentResponseProgressStream } from "../utils/event-stream.js";
 import { promiseWithResolvers } from "../utils/promise.js";
 import {
   agentResponseStreamToObject,
   asyncGeneratorToReadableStream,
+  mergeReadableStreams,
   onAgentResponseStreamEnd,
 } from "../utils/stream-utils.js";
 import {
@@ -80,6 +83,7 @@ export type ContextEmitEventMap = {
 export interface InvokeOptions<U extends UserContext = UserContext>
   extends Partial<Omit<AgentInvokeOptions<U>, "context">> {
   returnActiveAgent?: boolean;
+  returnProgressChunks?: boolean;
   disableTransfer?: boolean;
   sourceAgent?: Agent;
 }
@@ -94,6 +98,10 @@ export interface UserContext extends Record<string, unknown> {}
  */
 export interface Context<U extends UserContext = UserContext>
   extends TypedEventEmitter<ContextEventMap, ContextEmitEventMap> {
+  id: string;
+
+  parentId?: string;
+
   model?: ChatModel;
 
   skills?: Agent[];
@@ -287,35 +295,35 @@ export class AIGNEContext implements Context {
 
         const activeAgentPromise = promiseWithResolvers<Agent>();
 
-        const stream = onAgentResponseStreamEnd(
-          asyncGeneratorToReadableStream(response),
-          async ({ __activeAgent__: activeAgent }) => {
+        const stream = onAgentResponseStreamEnd(asyncGeneratorToReadableStream(response), {
+          onChunk(chunk) {
+            if (isAgentResponseDelta(chunk) && chunk.delta.json) {
+              return {
+                ...chunk,
+                delta: {
+                  ...chunk.delta,
+                  json: omitBy(chunk.delta.json, (_, k) => k === "__activeAgent__") as Exclude<
+                    typeof chunk.delta.json,
+                    TransferAgentOutput
+                  >,
+                },
+              };
+            }
+          },
+          onResult({ __activeAgent__: activeAgent }) {
             activeAgentPromise.resolve(activeAgent);
           },
-          {
-            processChunk(chunk) {
-              if (chunk.delta.json) {
-                return {
-                  ...chunk,
-                  delta: {
-                    ...chunk.delta,
-                    json: omitBy(chunk.delta.json, (_, k) => k === "__activeAgent__") as Exclude<
-                      typeof chunk.delta.json,
-                      TransferAgentOutput
-                    >,
-                  },
-                };
-              }
-              return chunk;
-            },
-          },
-        );
+        });
+
+        const finalStream = !options.returnProgressChunks
+          ? stream
+          : mergeReadableStreams(stream, new AgentResponseProgressStream(newContext));
 
         if (options.returnActiveAgent) {
-          return [stream, activeAgentPromise.promise];
+          return [finalStream, activeAgentPromise.promise];
         }
 
-        return stream;
+        return finalStream;
       },
     );
   }) as Context["invoke"];
@@ -393,7 +401,6 @@ class AIGNEContextShared {
 
   readonly messageQueue: MessageQueue;
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   readonly events = new Emitter<any>();
 
   get model() {
@@ -468,12 +475,14 @@ class AIGNEContextShared {
 
       const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
       for await (const value of stream) {
-        if (value.delta.json) {
-          value.delta.json = omitExistsProperties(result, value.delta.json);
-          Object.assign(result, value.delta.json);
-        }
+        if (isAgentResponseDelta(value)) {
+          if (value.delta.json) {
+            value.delta.json = omitExistsProperties(result, value.delta.json);
+            Object.assign(result, value.delta.json);
+          }
 
-        delete value.delta.json?.[transferAgentOutputKey];
+          delete value.delta.json?.[transferAgentOutputKey];
+        }
 
         if (isEmptyChunk(value)) continue;
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { FunctionAgent } from "@aigne/core";
+import { FunctionAgent, isAgentResponseDelta } from "@aigne/core";
 import { z } from "zod";
 
 test("Example FunctionAgent: basic", async () => {
@@ -110,8 +110,10 @@ test("Example FunctionAgent: streaming", async () => {
   let text = "";
   const json = {};
   for await (const chunk of stream) {
-    if (chunk.delta.text?.$message) text += chunk.delta.text.$message;
-    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    if (isAgentResponseDelta(chunk)) {
+      if (chunk.delta.text?.$message) text += chunk.delta.text.$message;
+      if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    }
   }
   console.log(text); // Output: Hello, I'm AIGNE!
   console.log(json); // Output: { temperature: 25 }

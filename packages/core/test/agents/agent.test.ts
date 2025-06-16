@@ -11,6 +11,7 @@ import {
   type AgentResponseStream,
   FunctionAgent,
   type Message,
+  isAgentResponseDelta,
   textDelta,
 } from "@aigne/core";
 import { guideRailAgentOptions } from "@aigne/core/agents/guide-rail-agent";
@@ -96,8 +97,10 @@ test("Agent returning a ReadableStream", async () => {
 
   let fullText = "";
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+    }
   }
 
   console.log(fullText); // Output: "Hello, This is..."
@@ -135,9 +138,11 @@ test("Agent using AsyncGenerator", async () => {
   let json: Message | undefined;
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.message;
-    if (text) message.push(text);
-    if (chunk.delta.json) json = chunk.delta.json;
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.message;
+      if (text) message.push(text);
+      if (chunk.delta.json) json = chunk.delta.json;
+    }
   }
 
   console.log(message); // Output: ["This", ",", " ", "This", " ", "is", "..."]
@@ -238,9 +243,11 @@ test("Agent.invoke with streaming response", async () => {
 
   // Read the stream using an async iterator
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.$message;
-    if (text) {
-      chunks.push(text);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.$message;
+      if (text) {
+        chunks.push(text);
+      }
     }
   }
 

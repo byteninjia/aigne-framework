@@ -1,7 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
 import { AnthropicChatModel } from "@aigne/anthropic";
-import { textDelta } from "@aigne/core";
+import { isAgentResponseDelta, textDelta } from "@aigne/core";
 import { readableStreamToArray } from "@aigne/core/utils/stream-utils.js";
 import { createMockEventStream } from "@aigne/test-utils/utils/event-stream.js";
 import {
@@ -91,9 +91,11 @@ test("Anthropic chat model with streaming using async generator", async () => {
   const json = {};
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
-    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+      if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    }
   }
 
   console.log(fullText); // Output: "I'm Claude, an AI assistant created by Anthropic. How can I help you today?"

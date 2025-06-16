@@ -10,6 +10,7 @@ import {
   FunctionAgent,
   type Message,
   guideRailAgentOptions,
+  isAgentResponseDelta,
 } from "@aigne/core";
 import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
 import type { PromiseOrValue } from "@aigne/core/utils/type-utils.js";
@@ -262,7 +263,8 @@ test("Example Agent: invoke", async () => {
   const stream = await agent.invoke("What is the price of ABT?", { streaming: true });
   let response = "";
   for await (const chunk of stream) {
-    if (chunk.delta.text?.$message) response += chunk.delta.text.$message;
+    if (isAgentResponseDelta(chunk) && chunk.delta.text?.$message)
+      response += chunk.delta.text.$message;
   }
   console.log(response);
   // Output:  "ABT is currently priced at $1000."

@@ -1,6 +1,6 @@
 import { beforeEach, expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import { textDelta } from "@aigne/core";
+import { isAgentResponseDelta, textDelta } from "@aigne/core";
 import { DeepSeekChatModel } from "@aigne/deepseek";
 import { createMockEventStream } from "@aigne/test-utils/utils/event-stream.js";
 import {
@@ -89,9 +89,11 @@ test("DeepSeek chat model with streaming using async generator", async () => {
   const json = {};
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
-    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+      if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    }
   }
 
   console.log(fullText); // Output: "Hello! I'm an AI assistant powered by DeepSeek's language model."

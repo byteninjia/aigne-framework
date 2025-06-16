@@ -19,6 +19,7 @@ import {
 import { AgentResponseStreamParser, EventStreamParser } from "@aigne/core/utils/event-stream.js";
 import { tryOrThrow } from "@aigne/core/utils/type-utils.js";
 import type { Args, Listener } from "@aigne/core/utils/typed-event-emtter.js";
+import { v7 } from "uuid";
 import { ClientAgent, type ClientAgentOptions } from "./client-agent.js";
 
 /**
@@ -64,6 +65,8 @@ export class AIGNEHTTPClient<U extends UserContext = UserContext> implements Con
    * @param options - Configuration options for connecting to the AIGNE server
    */
   constructor(public options: AIGNEHTTPClientOptions) {}
+
+  id = v7();
 
   usage: ContextUsage = newEmptyContextUsage();
 

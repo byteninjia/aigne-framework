@@ -9,6 +9,7 @@ import {
   isNonNullable,
   isNotEmpty,
   isRecord,
+  omit,
   omitBy,
   orArrayToArray,
   remove,
@@ -83,6 +84,12 @@ test("type-utils.unique", async () => {
     { id: 1 },
     { id: 2 },
   ]);
+});
+
+test("type-utils.omit", async () => {
+  expect(omit({ foo: 1, bar: 2 }, "foo")).toEqual({ bar: 2 });
+
+  expect(omit({ foo: 1, bar: 2 }, ["foo"])).toEqual({ bar: 2 });
 });
 
 test("type-utils.omitBy", async () => {

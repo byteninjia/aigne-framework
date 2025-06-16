@@ -8,9 +8,16 @@ import {
   UserInputTopic,
   UserOutputTopic,
   createMessage,
+  isAgentResponseDelta,
+  isAgentResponseProgress,
 } from "@aigne/core";
 import { TeamAgent } from "@aigne/core/agents/team-agent.js";
-import { stringToAgentResponseStream } from "@aigne/core/utils/stream-utils.js";
+import {
+  arrayToReadableStream,
+  readableStreamToArray,
+  stringToAgentResponseStream,
+} from "@aigne/core/utils/stream-utils.js";
+import { omit } from "@aigne/core/utils/type-utils.js";
 import { OpenAIChatModel } from "../_mocks/mock-models.js";
 
 test("AIGNE simple example", async () => {
@@ -60,7 +67,9 @@ test("AIGNE example with streaming response", async () => {
 
   const stream = await aigne.invoke(agent, "hello", { streaming: true });
   for await (const chunk of stream) {
-    if (chunk.delta.text?.$message) text += chunk.delta.text.$message;
+    if (isAgentResponseDelta(chunk) && chunk.delta.text?.$message) {
+      text += chunk.delta.text.$message;
+    }
   }
 
   console.log(text); // Output: Hello, How can I assist you today?
@@ -430,4 +439,65 @@ test("AIGNE.publish support custom user context", async () => {
       }),
     }),
   );
+});
+
+test("AIGNE.invoke should respond progressing chunks correctly", async () => {
+  const model = new OpenAIChatModel();
+
+  spyOn(model, "process").mockReturnValueOnce(
+    stringToAgentResponseStream("Hello, How can I assist you today?"),
+  );
+
+  const aigne = new AIGNE({
+    model,
+  });
+
+  const agent = AIAgent.from({
+    name: "chat",
+  });
+
+  const stream = await aigne.invoke(agent, "hello", {
+    streaming: true,
+    returnProgressChunks: true,
+  });
+  expect(
+    (await readableStreamToArray(stream)).map((i) =>
+      isAgentResponseProgress(i)
+        ? { progress: omit(i.progress, ["contextId", "parentContextId", "timestamp"]) }
+        : i,
+    ),
+  ).toMatchSnapshot();
+});
+
+test("AIGNE.invoke should respond progressing chunks (with failed chunks) correctly", async () => {
+  const model = new OpenAIChatModel();
+
+  spyOn(model, "process").mockReturnValueOnce(
+    arrayToReadableStream([
+      { delta: { text: { text: "Hello" } } },
+      { delta: { text: { text: " world" } } },
+      new Error("Test error"),
+      { delta: { text: { text: " foo" } } },
+    ]),
+  );
+
+  const aigne = new AIGNE({
+    model,
+  });
+
+  const agent = AIAgent.from({
+    name: "chat",
+  });
+
+  const stream = await aigne.invoke(agent, "hello", {
+    streaming: true,
+    returnProgressChunks: true,
+  });
+  expect(
+    (await readableStreamToArray(stream, { catchError: true })).map((i) =>
+      !(i instanceof Error) && isAgentResponseProgress(i)
+        ? { progress: omit(i.progress, ["contextId", "parentContextId", "timestamp"]) }
+        : i,
+    ),
+  ).toMatchSnapshot();
 });

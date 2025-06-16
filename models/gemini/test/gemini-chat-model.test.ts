@@ -1,6 +1,6 @@
 import { beforeEach, expect, spyOn, test } from "bun:test";
 import { join } from "node:path";
-import { textDelta } from "@aigne/core";
+import { isAgentResponseDelta, textDelta } from "@aigne/core";
 import { GeminiChatModel } from "@aigne/gemini";
 import { createMockEventStream } from "@aigne/test-utils/utils/event-stream.js";
 import {
@@ -77,9 +77,11 @@ test("Gemini chat model with streaming using async generator", async () => {
   const json = {};
 
   for await (const chunk of stream) {
-    const text = chunk.delta.text?.text;
-    if (text) fullText += text;
-    if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    if (isAgentResponseDelta(chunk)) {
+      const text = chunk.delta.text?.text;
+      if (text) fullText += text;
+      if (chunk.delta.json) Object.assign(json, chunk.delta.json);
+    }
   }
 
   console.log(fullText); // Output: "Hello from Gemini! I'm Google's helpful AI assistant. How can I assist you today?"
