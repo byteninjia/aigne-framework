@@ -22,7 +22,6 @@ import {
 } from "../agents/types.js";
 import { UserAgent } from "../agents/user-agent.js";
 import type { Memory } from "../memory/memory.js";
-import { createMessage } from "../prompt/prompt-builder.js";
 import { AgentResponseProgressStream } from "../utils/event-stream.js";
 import { promiseWithResolvers } from "../utils/promise.js";
 import {
@@ -133,12 +132,12 @@ export interface Context<U extends UserContext = UserContext>
    */
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I,
     options: InvokeOptions & { returnActiveAgent: true; streaming?: false },
   ): Promise<[O, Agent]>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I,
     options: InvokeOptions & { returnActiveAgent: true; streaming: true },
   ): Promise<[AgentResponseStream<O>, Promise<Agent>]>;
   /**
@@ -149,17 +148,17 @@ export interface Context<U extends UserContext = UserContext>
    */
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I,
     options?: InvokeOptions & { streaming?: false },
   ): Promise<O>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message: I | string,
+    message: I,
     options: InvokeOptions & { streaming: true },
   ): Promise<AgentResponseStream<O>>;
   invoke<I extends Message, O extends Message>(
     agent: Agent<I, O>,
-    message?: I | string,
+    message?: I,
     options?: InvokeOptions,
   ): UserAgent<I, O> | Promise<AgentResponse<O> | [AgentResponse<O>, Agent]>;
 
@@ -170,7 +169,7 @@ export interface Context<U extends UserContext = UserContext>
    */
   publish(
     topic: string | string[],
-    payload: Omit<MessagePayload, "context"> | Message | string,
+    payload: Omit<MessagePayload, "context"> | Message,
     options?: InvokeOptions,
   ): void;
 
@@ -279,9 +278,8 @@ export class AIGNEContext implements Context {
     }
 
     const newContext = this.newContext();
-    const msg = createMessage(message);
 
-    return Promise.resolve(newContext.internal.invoke(agent, msg, newContext, options)).then(
+    return Promise.resolve(newContext.internal.invoke(agent, message, newContext, options)).then(
       async (response) => {
         if (!options?.streaming) {
           let { __activeAgent__: activeAgent, ...output } =
@@ -479,53 +477,60 @@ class AIGNEContextShared {
     context: Context,
     options?: InvokeOptions,
   ): AgentProcessAsyncGenerator<O & { __activeAgent__: Agent }> {
-    let activeAgent: Agent = agent;
+    const startedAt = Date.now();
+    try {
+      let activeAgent: Agent = agent;
 
-    for (;;) {
-      const result: Message = {};
+      for (;;) {
+        const result: Message = {};
 
-      if (options?.sourceAgent && activeAgent !== options.sourceAgent) {
-        options.sourceAgent.hooks.onHandoff?.({
-          context,
-          source: options.sourceAgent,
-          target: activeAgent,
-          input,
-        });
-      }
+        if (options?.sourceAgent && activeAgent !== options.sourceAgent) {
+          options.sourceAgent.hooks.onHandoff?.({
+            context,
+            source: options.sourceAgent,
+            target: activeAgent,
+            input,
+          });
+        }
 
-      const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
-      for await (const value of stream) {
-        if (isAgentResponseDelta(value)) {
-          if (value.delta.json) {
-            value.delta.json = omitExistsProperties(result, value.delta.json);
-            Object.assign(result, value.delta.json);
+        const stream = await activeAgent.invoke(input, { ...options, context, streaming: true });
+        for await (const value of stream) {
+          if (isAgentResponseDelta(value)) {
+            if (value.delta.json) {
+              value.delta.json = omitExistsProperties(result, value.delta.json);
+              Object.assign(result, value.delta.json);
+            }
+
+            delete value.delta.json?.[transferAgentOutputKey];
           }
 
-          delete value.delta.json?.[transferAgentOutputKey];
+          if (isEmptyChunk(value)) continue;
+
+          yield value as AgentResponseChunk<O & { __activeAgent__: Agent }>;
         }
 
-        if (isEmptyChunk(value)) continue;
-
-        yield value as AgentResponseChunk<O & { __activeAgent__: Agent }>;
-      }
-
-      if (!options?.disableTransfer) {
-        const transferToAgent = isTransferAgentOutput(result)
-          ? result[transferAgentOutputKey].agent
-          : undefined;
-        if (transferToAgent) {
-          activeAgent = transferToAgent;
-          continue;
+        if (!options?.disableTransfer) {
+          const transferToAgent = isTransferAgentOutput(result)
+            ? result[transferAgentOutputKey].agent
+            : undefined;
+          if (transferToAgent) {
+            activeAgent = transferToAgent;
+            continue;
+          }
         }
+        break;
       }
-      break;
+
+      yield {
+        delta: {
+          json: { __activeAgent__: activeAgent } as Partial<O & { __activeAgent__: Agent }>,
+        },
+      };
+    } finally {
+      const endedAt = Date.now();
+      const duration = endedAt - startedAt;
+      this.usage.duration += duration;
     }
-
-    yield {
-      delta: {
-        json: { __activeAgent__: activeAgent } as Partial<O & { __activeAgent__: Agent }>,
-      },
-    };
   }
 }
 
