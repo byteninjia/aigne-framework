@@ -19,7 +19,15 @@
     "models/open-router": {},
     "models/openai": {},
     "models/xai": {},
-    "blocklets/observability": {},
+    "blocklets/observability": {
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "blocklets/observability/blocklet.yml",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
     "examples/mcp-github": {},
     "examples/mcp-puppeteer": {},
     "examples/mcp-sqlite": {},
