@@ -36,6 +36,8 @@ export class TerminalTracer {
   private tasks: { [callId: string]: Task } = {};
 
   async run(agent: Agent, input: Message) {
+    await this.context.observer?.serve();
+
     const context = this.context.newContext({ reset: true });
 
     const listr = new AIGNEListr(
@@ -137,7 +139,9 @@ export class TerminalTracer {
     context.on("agentFailed", onAgentFailed);
 
     try {
-      const result = await listr.run(() => context.invoke(agent, input, { streaming: true }));
+      const result = await listr.run(() =>
+        context.invoke(agent, input, { streaming: true, newContext: false }),
+      );
 
       return { result, context };
     } finally {
