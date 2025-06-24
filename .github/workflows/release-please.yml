@@ -1,5 +1,8 @@
 name: Release Please
 
+env:
+  NODE_OPTIONS: '--max_old_space_size=6144'
+
 on:
   push:
     branches:
@@ -21,6 +24,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
+        with:
+          fetch-depth: 2
 
       - uses: pnpm/action-setup@v3
         if: ${{ steps.release.outputs.release_created }}
@@ -66,6 +71,36 @@ jobs:
         run: |
           npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
           pnpm -F "@aigne/*" publish --access public --no-git-checks
+
+      - name: Check if blocklets/observability version changed
+        id: blocklets-observability-version-check
+        run: |
+          if git diff HEAD~1 HEAD -- blocklets/observability/package.json | grep '"version"'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Blocklet workflow
+        if: ${{ steps.release.outputs.release_created && steps.blocklets-observability-version-check.outputs.changed == 'true'  }}
+        env:
+          COMPONENT_STORE_URL: ${{ secrets.STORE_ENDPOINT_TEST }}
+        uses: blocklet/action-workflow@v1
+        with:
+          deps-server-version: beta
+          skip-deps: false
+          skip-upload: false
+          skip-deploy: true
+          skip-release: true
+          working-directory: blocklets/observability
+          bundle-command: pnpm bundle
+          store-endpoint: ${{ secrets.STORE_ENDPOINT_TEST }}
+          store-access-token: ${{ secrets.STORE_ACCESS_TOKEN_TEST }}
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          abtnode-endpoint: ${{ secrets.STAGING_NODE_ENDPOINT }}
+          access-key: ${{ secrets.STAGING_NODE_ACCESS_KEY }}
+          access-secret: ${{ secrets.STAGING_NODE_ACCESS_SECRET }}
 
       - name: Publish Docs
         if: ${{ steps.release.outputs.release_created }}

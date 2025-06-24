@@ -23,8 +23,7 @@
     "test:coverage": "pnpm -r run test:coverage",
     "postinstall": "npx simple-git-hooks",
     "publish:docs": "pnpm build:docs && bun scripts/publish-docs.ts",
-    "build:markdown": "remark ./*.md docs/ -o --silently-ignore",
-    "bump-version": "zx --quiet scripts/bump-version.mjs"
+    "build:markdown": "remark ./*.md docs/ -o --silently-ignore"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -19,6 +19,7 @@
     "models/open-router": {},
     "models/openai": {},
     "models/xai": {},
+    "blocklets/observability": {},
     "examples/mcp-github": {},
     "examples/mcp-puppeteer": {},
     "examples/mcp-sqlite": {},

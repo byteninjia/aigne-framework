@@ -1,10 +1,3 @@
-## [1.11.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.10.0...agent-library-v1.11.0) (2025-05-27)
-
-
-### Features
-
-* add schema transform ([#35](https://github.com/AIGNE-io/aigne-framework/issues/35)) ([c7d9a2c](https://github.com/AIGNE-io/aigne-framework/commit/c7d9a2c9fcab8d384d4198db5ff6ba4603846cdf))
-
 ## [1.15.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.14.0...agent-library-v1.15.0) (2025-06-24)
 
 
@@ -157,6 +150,15 @@
     * @aigne/openai bumped to 0.2.1
     * @aigne/sqlite bumped to 0.1.0
 
+
+## [1.11.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.10.0...agent-library-v1.11.0) (2025-05-27)
+
+
+### Features
+
+* add schema transform ([#35](https://github.com/AIGNE-io/aigne-framework/issues/35)) ([c7d9a2c](https://github.com/AIGNE-io/aigne-framework/commit/c7d9a2c9fcab8d384d4198db5ff6ba4603846cdf))
+
+
 ## [1.10.0](https://github.com/AIGNE-io/aigne-framework/compare/agent-library-v1.9.0...agent-library-v1.10.0) (2025-05-25)
 
 
@@ -295,24 +297,3 @@
 ### Bug Fixes
 
 * rename @aigne/core-next to @aigne/core ([3a81009](https://github.com/AIGNE-io/aigne-framework/commit/3a8100962c81813217b687ae28e8de604419c622))
-
-## 1.1.0-beta.17 (2025-3-18)
-
-- chore: add support for esm module
-
-## 1.1.0-beta.16 (2025-3-18)
-
-- chore: add puppeteer in linux need docker_container
-
-## 1.1.0-beta.15 (2025-3-18)
-
-- chore: make coverage report as text to terminal
-- chore: update contributing docs
-
-## 1.1.0-beta.14 (2025-3-18)
-
-- chore(example): add code-execution example
-
-## 1.1.0-beta.13 (2025-3-18)
-
-- feat: add OrchestratorAgent in agent library
