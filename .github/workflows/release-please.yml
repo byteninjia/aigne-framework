@@ -81,6 +81,13 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Remove h3 from blocklets/observability/CHANGELOG.md
+        if: ${{ steps.release.outputs.release_created && steps.blocklets-observability-version-check.outputs.changed == 'true'  }}
+        run: |
+          if [ -f blocklets/observability/CHANGELOG.md ]; then
+            sed -E -i "s/^### (.*)$/**\1**/" blocklets/observability/CHANGELOG.md
+          fi
+
       - name: Blocklet workflow
         if: ${{ steps.release.outputs.release_created && steps.blocklets-observability-version-check.outputs.changed == 'true'  }}
         env:
