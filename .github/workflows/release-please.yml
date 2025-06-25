@@ -86,6 +86,7 @@ jobs:
         run: |
           if [ -f blocklets/observability/CHANGELOG.md ]; then
             sed -E -i "s/^### (.*)$/**\1**/" blocklets/observability/CHANGELOG.md
+            sed -E -i "/^# Changelog$/d" blocklets/observability/CHANGELOG.md
           fi
 
       - name: Blocklet workflow
