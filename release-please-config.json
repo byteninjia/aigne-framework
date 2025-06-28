@@ -20,6 +20,7 @@
     "models/openai": {},
     "models/xai": {},
     "blocklets/observability": {
+      "package-name": "blocklet-observability",
       "extra-files": [
         {
           "type": "yaml",
