@@ -73,6 +73,7 @@ jobs:
           pnpm -F "@aigne/*" publish --access public --no-git-checks
 
       - name: Check if blocklets/observability version changed
+        if: ${{ steps.release.outputs.release_created }}
         id: blocklets-observability-version-check
         run: |
           if git diff HEAD~1 HEAD -- blocklets/observability/package.json | grep '"version"'; then
