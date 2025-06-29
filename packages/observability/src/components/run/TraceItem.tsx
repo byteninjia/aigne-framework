@@ -3,7 +3,7 @@ import { Box, Card, LinearProgress, Tooltip, Typography } from "@mui/material";
 import type { ReactElement } from "react";
 import { parseDurationMs } from "../../utils/latency.ts";
 import { AgentTag } from "./AgentTag.tsx";
-import type { RunData } from "./types.ts";
+import type { TraceData } from "./types.ts";
 
 type TraceItemProps = {
   name: string;
@@ -33,11 +33,15 @@ function TraceItem({
   const { t } = useLocaleContext();
 
   const getBorderColor = () => {
-    if (status === 1) {
-      if (selected) {
-        return "primary.main";
-      }
+    if (selected) {
+      return "primary.main";
+    }
 
+    if (status === 0) {
+      return "warning.main";
+    }
+
+    if (status === 1) {
       return "transparent";
     }
 
@@ -125,7 +129,7 @@ type TraceStep = {
   selected?: boolean;
   children?: TraceStep[];
   start?: number;
-  run?: RunData;
+  run?: TraceData;
   agentTag?: string;
   status?: {
     code: number;
@@ -136,11 +140,11 @@ type TraceStep = {
 export function annotateTraceSteps({
   steps,
   start = 0,
-  selectedRun,
+  selectedTrace,
 }: {
-  steps: RunData[];
+  steps: TraceData[];
   start: number;
-  selectedRun?: RunData | null;
+  selectedTrace?: TraceData | null;
 }): TraceStep[] {
   let current = start;
 
@@ -153,11 +157,11 @@ export function annotateTraceSteps({
 
     const annotated: TraceStep = {
       ...step,
-      selected: step.id === selectedRun?.id,
+      selected: step.id === selectedTrace?.id,
       start: current,
       duration: parseDurationMs(step.startTime, step.endTime),
       children: step.children
-        ? annotateTraceSteps({ steps: step.children, start: current, selectedRun })
+        ? annotateTraceSteps({ steps: step.children, start: current, selectedTrace })
         : undefined,
       run: step,
       agentTag: step.attributes?.agentTag,
@@ -172,19 +176,21 @@ export function annotateTraceSteps({
 }
 
 export function renderTraceItems({
+  traceId,
   items,
   totalDuration,
   depth = 0,
   onSelect,
 }: {
+  traceId: string;
   items: TraceStep[];
   totalDuration: number;
   depth?: number;
-  onSelect?: (step?: RunData) => void;
+  onSelect?: (step?: TraceData) => void;
 }): ReactElement[] {
   return items.flatMap((item) => [
     <TraceItem
-      key={item.name + (item.start ?? 0)}
+      key={`${item.name}-${item.duration}-${item.agentTag}-${traceId}`}
       name={item.name}
       duration={item.duration}
       start={item.start ?? 0}
@@ -196,21 +202,29 @@ export function renderTraceItems({
       onSelect={() => onSelect?.(item.run)}
     />,
     ...(item.children
-      ? renderTraceItems({ items: item.children, totalDuration, depth: depth + 1, onSelect })
+      ? renderTraceItems({
+          traceId,
+          items: item.children,
+          totalDuration,
+          depth: depth + 1,
+          onSelect,
+        })
       : []),
   ]);
 }
 
 export default function TraceItemList({
+  traceId,
   steps,
   onSelect,
-  selectedRun,
+  selectedTrace,
 }: {
-  steps: RunData[];
-  onSelect?: (step?: RunData) => void;
-  selectedRun?: RunData | null;
+  traceId: string;
+  steps: TraceData[];
+  onSelect?: (step?: TraceData) => void;
+  selectedTrace?: TraceData | null;
 }) {
-  const annotatedSteps = annotateTraceSteps({ steps, start: 0, selectedRun });
+  const annotatedSteps = annotateTraceSteps({ steps, start: 0, selectedTrace });
   const { t } = useLocaleContext();
 
   return (
@@ -243,6 +257,7 @@ export default function TraceItemList({
       </Box>
 
       {renderTraceItems({
+        traceId,
         items: annotatedSteps,
         totalDuration: annotatedSteps[0].duration,
         depth: 0,

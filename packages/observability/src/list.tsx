@@ -1,56 +1,120 @@
+import dayjs from "@abtnode/util/lib/dayjs";
+import TableSearch from "@arcblock/ux/lib/Datatable/TableSearch";
 import Empty from "@arcblock/ux/lib/Empty";
+import { useLocaleContext } from "@arcblock/ux/lib/Locale/context";
+import RelativeTime from "@arcblock/ux/lib/RelativeTime";
+import { ToastProvider } from "@arcblock/ux/lib/Toast";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
+import useDocumentVisibility from "ahooks/lib/useDocumentVisibility";
+import useLocalStorageState from "ahooks/lib/useLocalStorageState";
+import useRafInterval from "ahooks/lib/useRafInterval";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { joinURL, withQuery } from "ufo";
+import CustomDateRangePicker from "./components/date-picker.tsx";
+import RunDetailDrawer from "./components/run/RunDetailDrawer.tsx";
+import type { TraceData } from "./components/run/types.ts";
+import SwitchComponent from "./components/switch.tsx";
+import { watchSSE } from "./utils/event.ts";
+import { origin } from "./utils/index.ts";
+import { parseDuration } from "./utils/latency.ts";
 
-interface AppRef {
+interface ListRef {
   refetch: () => void;
 }
 
-import { useLocaleContext } from "@arcblock/ux/lib/Locale/context";
-import RelativeTime from "@arcblock/ux/lib/RelativeTime";
-import RunDetailDrawer from "./components/run/RunDetailDrawer.tsx";
-import type { RunData } from "./components/run/types.ts";
-import { watchSSE } from "./utils/event.ts";
-import { origin } from "./utils/index.js";
-import { parseDuration } from "./utils/latency.ts";
-
-interface RunsResponse {
-  data: RunData[];
+interface TracesResponse {
+  data: TraceData[];
   total: number;
 }
 
-const page = 0;
-const pageSize = 20;
+interface SearchState {
+  searchText: string;
+  dateRange: [Date, Date];
+}
 
-const App = forwardRef<AppRef>((_props, ref) => {
+const List = forwardRef<ListRef>((_props, ref) => {
   const { t } = useLocaleContext();
-  const [runs, setRuns] = useState<RunData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedRun, setSelectedRun] = useState<RunData | null>(null);
-  const [paginationModel, setPaginationModel] = useState({ page, pageSize });
-  const [total, setTotal] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const documentVisibility = useDocumentVisibility();
+  const [live, setLive] = useState(false);
 
-  const fetchRuns = async ({ page, pageSize }: { page: number; pageSize: number }) => {
-    fetch(withQuery(joinURL(origin, "/api/trace/tree"), { page, pageSize }))
-      .then((res) => res.json() as Promise<RunsResponse>)
-      .then(({ data, total: totalCount }) => {
-        const format = (run: RunData) => ({
-          ...run,
-          startTime: Number(run.startTime),
-          endTime: Number(run.endTime),
-        });
-        const formatted = data.map(format);
-        setRuns(formatted);
-        setLoading(false);
-        setTotal(totalCount);
-      })
-      .catch(() => setLoading(false));
+  const [page, setPage] = useLocalStorageState("observability-page", {
+    defaultValue: {
+      page: 1,
+      pageSize: 20,
+    },
+  });
+
+  const [search, setSearch] = useState<SearchState>({
+    searchText: "",
+    dateRange: [
+      dayjs().subtract(1, "month").startOf("day").toDate(),
+      dayjs().endOf("day").toDate(),
+    ],
+  });
+
+  const [traces, setTraces] = useState<TraceData[]>([]);
+  const [total, setTotal] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedTrace, setSelectedTrace] = useState<TraceData | null>(null);
+
+  const fetchTraces = async ({
+    page,
+    pageSize,
+    searchText = "",
+    dateRange,
+  }: { page: number; pageSize: number; searchText?: string; dateRange?: [Date, Date] }) => {
+    try {
+      const res = await fetch(
+        withQuery(joinURL(origin, "/api/trace/tree"), {
+          page,
+          pageSize,
+          searchText,
+          startDate: dateRange?.[0]?.toISOString() ?? "",
+          endDate: dateRange?.[1]?.toISOString() ?? "",
+        }),
+      ).then((r) => r.json() as Promise<TracesResponse>);
+      const formatted: TraceData[] = res.data.map((trace) => ({
+        ...trace,
+        startTime: Number(trace.startTime),
+        endTime: Number(trace.endTime),
+      }));
+      setTraces(formatted);
+      setTotal(res.total);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (documentVisibility === "visible") {
+      setLoading(true);
+      fetchTraces({
+        page: page.page - 1,
+        pageSize: page.pageSize,
+        searchText: search.searchText,
+        dateRange: search.dateRange,
+      });
+    }
+  }, [page.page, page.pageSize, search.searchText, search.dateRange, documentVisibility]);
+
+  useRafInterval(() => {
+    if (!live) return;
+    if (window.blocklet?.prefix) return;
+
+    fetch(joinURL(origin, "/api/trace/tree/stats"))
+      .then((res) => res.json() as Promise<{ data: { lastTraceChanged: boolean } }>)
+      .then(({ data }) => {
+        if (data?.lastTraceChanged) {
+          fetchTraces({ page: 0, pageSize: page.pageSize });
+        }
+      });
+  }, 3000);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useImperativeHandle(
@@ -58,41 +122,25 @@ const App = forwardRef<AppRef>((_props, ref) => {
     () => ({
       refetch: () => {
         setTotal(0);
-        setRuns([]);
-        fetchRuns({ page: 0, pageSize: paginationModel.pageSize });
+        setTraces([]);
+        fetchTraces({ page: 0, pageSize: page.pageSize });
       },
     }),
-    [paginationModel.pageSize],
+    [page.pageSize],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const abortController = new AbortController();
     (async () => {
-      const res = await watchSSE({
-        signal: abortController.signal,
-      });
+      const res = await watchSSE({ signal: abortController.signal });
       const reader = res.getReader();
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-
-        if (value) {
-          switch (value.type) {
-            case "event": {
-              fetchRuns({ page: 0, pageSize: paginationModel.pageSize });
-              break;
-            }
-            case "error": {
-              console.log("error", value);
-              break;
-            }
-            default:
-              console.warn("Unsupported event", value);
-          }
+        if (done) break;
+        if (value?.type === "event") {
+          fetchTraces({ page: 0, pageSize: page.pageSize });
         }
       }
     })();
@@ -100,16 +148,9 @@ const App = forwardRef<AppRef>((_props, ref) => {
     return () => {
       abortController.abort();
     };
-  }, [paginationModel.pageSize]);
+  }, [page.pageSize]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    setLoading(true);
-
-    fetchRuns({ page: paginationModel.page, pageSize: paginationModel.pageSize });
-  }, [paginationModel.page, paginationModel.pageSize]);
-
-  const columns: GridColDef<RunData>[] = [
+  const columns: GridColDef<TraceData>[] = [
     { field: "id", headerName: "ID", width: 160 },
     { field: "name", headerName: t("agentName"), minWidth: 150 },
     {
@@ -130,26 +171,52 @@ const App = forwardRef<AppRef>((_props, ref) => {
       field: "latency",
       headerName: t("latency"),
       minWidth: 100,
+      align: "right",
+      headerAlign: "right",
       valueGetter: (_, row) => parseDuration(row.startTime, row.endTime),
     },
     {
       field: "status",
       headerName: t("status"),
       minWidth: 100,
-      renderCell: ({ row }) => (
-        <Chip
-          label={row.status?.code === 1 ? t("success") : t("failed")}
-          size="small"
-          color={row.status?.code === 1 ? "success" : "error"}
-          variant="outlined"
-          sx={{ height: 21 }}
-        />
-      ),
+      align: "center",
+      headerAlign: "center",
+      renderCell: ({ row }) => {
+        const map: Record<
+          number,
+          { color: "default" | "error" | "warning" | "success"; label: string }
+        > = {
+          0: {
+            color: "warning",
+            label: t("pending"),
+          },
+          1: {
+            color: "success",
+            label: t("success"),
+          },
+          2: {
+            color: "error",
+            label: t("failed"),
+          },
+        };
+
+        return (
+          <Chip
+            label={map[row.status?.code as keyof typeof map]?.label ?? t("unknown")}
+            size="small"
+            color={map[row.status?.code as keyof typeof map]?.color ?? "default"}
+            variant="outlined"
+            sx={{ height: 21, ml: 1 }}
+          />
+        );
+      },
     },
     {
       field: "startTime",
       headerName: t("startedAt"),
       minWidth: 160,
+      align: "right",
+      headerAlign: "right",
       renderCell: ({ row }) =>
         row.startTime ? (
           <RelativeTime value={row.startTime} type="absolute" format="YYYY-MM-DD HH:mm:ss" />
@@ -161,6 +228,8 @@ const App = forwardRef<AppRef>((_props, ref) => {
       field: "endTime",
       headerName: t("endedAt"),
       minWidth: 160,
+      align: "right",
+      headerAlign: "right",
       renderCell: ({ row }) =>
         row.endTime ? (
           <RelativeTime value={row.endTime} type="absolute" format="YYYY-MM-DD HH:mm:ss" />
@@ -170,8 +239,12 @@ const App = forwardRef<AppRef>((_props, ref) => {
     },
   ];
 
+  const onDateRangeChange = (value: [Date, Date]) => {
+    setSearch((x) => ({ ...x, dateRange: value, page: 1 }));
+  };
+
   return (
-    <>
+    <ToastProvider>
       <Box
         sx={{
           ".striped-row": {
@@ -179,14 +252,38 @@ const App = forwardRef<AppRef>((_props, ref) => {
           },
         }}
       >
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+          <TableSearch
+            options={{
+              searchPlaceholder: t("search"),
+              searchDebounceTime: 600,
+            }}
+            search={search.searchText}
+            searchText={search.searchText}
+            searchTextUpdate={(text) => setSearch((x) => ({ ...x, searchText: text }))}
+            searchClose={() => setSearch((x) => ({ ...x, searchText: "" }))}
+            onSearchOpen={() => {}}
+          />
+
+          <Box key="date-picker" sx={{ mx: 1 }}>
+            <CustomDateRangePicker value={search.dateRange} onChange={onDateRangeChange} />
+          </Box>
+
+          <Box sx={{ display: "flex" }}>
+            <SwitchComponent live={live} setLive={setLive} />
+          </Box>
+        </Box>
+
         <DataGrid
-          rows={runs}
+          rows={traces}
           columns={columns}
           loading={loading}
-          pageSizeOptions={[10, 20, 50]}
+          pageSizeOptions={[10, 20, 50, 100]}
           pagination
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
+          paginationModel={{ page: page.page - 1, pageSize: page.pageSize }}
+          onPaginationModelChange={(model) => {
+            setPage((x) => ({ ...x, page: model.page + 1, pageSize: model.pageSize }));
+          }}
           rowCount={total}
           rowHeight={40}
           getRowClassName={(params) =>
@@ -194,8 +291,11 @@ const App = forwardRef<AppRef>((_props, ref) => {
           }
           paginationMode="server"
           onRowClick={({ row }) => {
-            setSelectedRun(row);
-            setDrawerOpen(true);
+            setSelectedTrace(row);
+            setSearchParams((prev) => {
+              prev.set("traceId", row.id);
+              return prev;
+            });
           }}
           disableRowSelectionOnClick
           sx={{
@@ -215,20 +315,35 @@ const App = forwardRef<AppRef>((_props, ref) => {
                 <Empty>{t("noData")}</Empty>
               </Box>
             ),
+            noResultsOverlay: () => (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Empty>{t("noData")}</Empty>
+              </Box>
+            ),
           }}
         />
       </Box>
 
       <RunDetailDrawer
-        open={drawerOpen}
+        open={!!searchParams.get("traceId")}
+        traceId={searchParams.get("traceId")}
+        trace={selectedTrace}
         onClose={() => {
-          setDrawerOpen(false);
-          setSelectedRun(null);
+          setSelectedTrace(null);
+          setSearchParams((prev) => {
+            prev.delete("traceId");
+            return prev;
+          });
         }}
-        run={selectedRun}
       />
-    </>
+    </ToastProvider>
   );
 });
-
-export default App;
+export default List;

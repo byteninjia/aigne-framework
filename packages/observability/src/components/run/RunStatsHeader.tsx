@@ -1,6 +1,8 @@
 import { useLocaleContext } from "@arcblock/ux/lib/Locale/context";
 import RelativeTime from "@arcblock/ux/lib/RelativeTime";
+import Toast from "@arcblock/ux/lib/Toast";
 import CloseIcon from "@mui/icons-material/Close";
+import ShareIcon from "@mui/icons-material/Share";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
@@ -36,7 +38,10 @@ function StatsItem({ label, value }: StatsItemProps) {
 interface RunStatsHeaderProps {
   inputTokens: number;
   outputTokens: number;
-  tokens: number;
+  totalTokens: number;
+  inputCost: string | null;
+  outputCost: string | null;
+  totalCost: string | null;
   count: number;
   latency: string;
   timestamp: string;
@@ -46,8 +51,11 @@ interface RunStatsHeaderProps {
 export default function RunStatsHeader({
   inputTokens,
   outputTokens,
+  totalTokens,
+  inputCost,
+  outputCost,
+  totalCost,
   count,
-  tokens,
   latency,
   timestamp,
   onClose,
@@ -64,17 +72,29 @@ export default function RunStatsHeader({
         gap: 1,
       }}
     >
-      <IconButton onClick={onClose}>
+      <IconButton
+        onClick={onClose}
+        sx={{
+          transition: "transform 0.3s",
+          "&:hover svg": {
+            transform: "rotate(90deg)",
+            transition: "transform 0.3s",
+          },
+          "& svg": {
+            transition: "transform 0.3s",
+          },
+        }}
+      >
         <CloseIcon />
       </IconButton>
 
       <Divider orientation="vertical" flexItem />
 
-      <StatsItem label={t("inputTokens")} value={inputTokens} />
+      <StatsItem label={t("inputTokens")} value={`${inputTokens} ${inputCost}`} />
       <Typography>+</Typography>
-      <StatsItem label={t("outputTokens")} value={outputTokens} />
+      <StatsItem label={t("outputTokens")} value={`${outputTokens} ${outputCost}`} />
       <Typography>=</Typography>
-      <StatsItem label={t("tokens")} value={tokens} />
+      <StatsItem label={t("tokens")} value={`${totalTokens} ${totalCost}`} />
       <Box sx={{ flex: 1 }} />
       <StatsItem label={t("count")} value={count} />
       <StatsItem label={t("latency")} value={latency} />
@@ -84,6 +104,17 @@ export default function RunStatsHeader({
       <Typography variant="body2" sx={{ pl: 2 }}>
         <RelativeTime value={timestamp} type="all" disableTimezone useShortTimezone />
       </Typography>
+
+      <Box>
+        <IconButton
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            Toast.success(t("copied"));
+          }}
+        >
+          <ShareIcon fontSize="small" />
+        </IconButton>
+      </Box>
     </Box>
   );
 }

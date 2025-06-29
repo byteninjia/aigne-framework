@@ -1,10 +1,10 @@
-export interface RunData {
+export interface TraceData {
   id: string;
   name: string;
   startTime?: number;
   endTime?: number;
   error?: string;
-  children?: RunData[];
+  children?: TraceData[];
   status?: {
     code: number;
     message: string;
@@ -20,5 +20,7 @@ export interface RunData {
       [key: string]: unknown;
     };
     agentTag?: string;
+    userContext?: Record<string, unknown>;
+    memories?: Record<string, unknown>[];
   };
 }
