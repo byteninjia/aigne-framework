@@ -115,13 +115,17 @@ export default function TraceDetailPanel({ trace }: { trace?: TraceData | null }
   return (
     <Box sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography fontSize={20} color="text.primary">
+        <Typography
+          sx={{
+            fontSize: 20,
+            color: "text.primary",
+          }}
+        >
           {`${trace?.name}`}
         </Typography>
 
         <AgentTag agentTag={trace?.attributes?.agentTag} />
       </Box>
-
       <Box sx={{ my: 1 }}>
         <Box
           sx={{
@@ -271,7 +275,6 @@ export default function TraceDetailPanel({ trace }: { trace?: TraceData | null }
           </Box>
         </Box>
       </Box>
-
       <Box sx={{ position: "relative" }}>
         <Tabs
           value={tab}
@@ -284,10 +287,9 @@ export default function TraceDetailPanel({ trace }: { trace?: TraceData | null }
           ))}
         </Tabs>
       </Box>
-
       <Box
-        mt={2}
         sx={{
+          mt: 2,
           flex: 1,
           height: 0,
           overflow: "auto",
@@ -300,7 +302,13 @@ export default function TraceDetailPanel({ trace }: { trace?: TraceData | null }
 
         <Box sx={{ overflowX: "auto", color: "common.white" }}>
           {value === undefined || value === null ? (
-            <Typography color="grey.500" sx={{ fontSize: 14, p: 2 }}>
+            <Typography
+              sx={{
+                color: "grey.500",
+                fontSize: 14,
+                p: 2,
+              }}
+            >
               {t("noData")}
             </Typography>
           ) : typeof value === "object" ? (

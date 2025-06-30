@@ -20,8 +20,8 @@ export default flatten({
   count: "Count",
   timestamp: "Timestamp",
   duration: "Duration",
-  dashboardTitle: "Aigne Observability",
-  dashboardDescription: "Web Interface to manage your Aigne Agent",
+  dashboardTitle: "AIGNE Observability",
+  dashboardDescription: "Web Interface to manage your AIGNE Agent",
   traces: "Traces",
   metadata: "Metadata",
   startTime: "Start Time",
@@ -54,5 +54,5 @@ export default flatten({
     toolChoice: "Tool Choice",
   },
   search: "Search",
-  pending: "Pending",
+  pending: "Running",
 });
