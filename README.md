@@ -126,11 +126,23 @@ console.log(result2);
 
 [AIGNE Framework Documentation](https://www.arcblock.io/docs/aigne-framework) provides comprehensive guides and API references to help developers quickly get started and master the framework.
 
-## Architecture
+## Simplifying Agentic Workflows
 
-AIGNE Framework supports various workflow patterns to address different AI application needs. Each workflow pattern is optimized for specific use cases:
+The AIGNE Framework offers multiple workflow patterns, each tailored to address distinct application scenarios efficiently.
 
-### Sequential Workflow
+### Workflow Patterns
+
+* [Workflow Router](./examples/workflow-router) - Implement intelligent routing logic to direct requests to appropriate handlers based on content.
+* [Workflow Sequential](./examples/workflow-sequential) - Build step-by-step processing pipelines with guaranteed execution order.
+* [Workflow Concurrency](./examples/workflow-concurrency) - Optimize performance by processing multiple tasks simultaneously with parallel execution.
+* [Workflow Handoff](./examples/workflow-handoff) - Create seamless transitions between specialized agents to solve complex problems.
+* [Workflow Reflection](./examples/workflow-reflection) - Enable self-improvement through output evaluation and refinement capabilities.
+* [Workflow Orchestration](./examples/workflow-orchestration) - Coordinate multiple agents working together in sophisticated processing pipelines.
+* [Workflow Code Execution](./examples/workflow-code-execution) - Safely execute dynamically generated code within AI-driven workflows.
+* [Workflow Group Chat](./examples/workflow-group-chat) - Share messages and interact with multiple agents in a group chat environment.
+
+
+### Sequential 
 
 **Use Cases**: Processing multi-step tasks that require a specific execution order, such as content generation pipelines, multi-stage data processing, etc.
 
@@ -154,7 +166,9 @@ class writer processing
 class formatProof processing
 ```
 
-### Concurrency Workflow
+**Example**: [@aigne/example-workflow-sequential: Pipeline](./examples/workflow-sequential/README.md) 
+
+### Concurrency 
 
 **Use Cases**: Scenarios requiring simultaneous processing of multiple independent tasks to improve efficiency, such as parallel data analysis, multi-dimensional content evaluation, etc.
 
@@ -180,7 +194,9 @@ class audienceAnalyzer processing
 class aggregator processing
 ```
 
-### Router Workflow
+**Example**: [@aigne/example-workflow-concurrency: Concurrency](./examples/workflow-concurrency/README.md)
+
+### Router 
 
 **Use Cases**: Scenarios where requests need to be routed to different specialized processors based on input content type, such as intelligent customer service systems, multi-functional assistants, etc.
 
@@ -209,7 +225,10 @@ class feedback processing
 class other processing
 ```
 
-### Handoff Workflow
+**Example**: [@aigne/example-workflow-router: Router](./examples/workflow-router/README.md)
+
+
+### Handoff 
 
 **Use Cases**: Scenarios requiring control transfer between different specialized agents to solve complex problems, such as expert collaboration systems, etc.
 
@@ -232,7 +251,10 @@ class agentA processing
 class agentB processing
 ```
 
-### Reflection Workflow
+**Example**: [@aigne/example-workflow-handoff: Task handoff](./examples/workflow-handoff/README.md)
+
+
+### Reflection 
 
 **Use Cases**: Scenarios requiring self-assessment and iterative improvement of output quality, such as code reviews, content quality control, etc.
 
@@ -255,7 +277,10 @@ class coder processing
 class reviewer processing
 ```
 
-### Code Execution Workflow
+**Example**: [@aigne/example-workflow-reflection: Reflection](./examples/workflow-reflection/README.md)
+
+
+### Code Execution 
 
 **Use Cases**: Scenarios requiring dynamically generated code execution to solve problems, such as automated data analysis, algorithmic problem solving, etc.
 
@@ -281,25 +306,22 @@ class coder processing
 class sandbox processing
 ```
 
-## Examples
+**Example**: [@aigne/example-workflow-code-execution: Code execution](./examples/workflow-code-execution/README.md)
 
-### MCP Server Integration
+## Built-in MCP Support
+
+Built-in MCP support allows the AIGNE framework to effortlessly run its own MCP server or seamlessly integrate with external MCP servers.
+
+### Implement MCP Server
 
 * [MCP Server](./examples/mcp-server) - Build a MCP server using AIGNE CLI to provide MCP services.
+
+### Use MCP Servers
+
 * [Puppeteer MCP Server](./examples/mcp-puppeteer) - Learn how to leverage Puppeteer for automated web scraping through the AIGNE Framework.
 * [SQLite MCP Server](./examples/mcp-sqlite) - Explore database operations by connecting to SQLite through the Model Context Protocol.
 * [Github](./examples/mcp-github) - Interact with GitHub repositories using the GitHub MCP Server.
 
-### Workflow Patterns
-
-* [Workflow Router](./examples/workflow-router) - Implement intelligent routing logic to direct requests to appropriate handlers based on content.
-* [Workflow Sequential](./examples/workflow-sequential) - Build step-by-step processing pipelines with guaranteed execution order.
-* [Workflow Concurrency](./examples/workflow-concurrency) - Optimize performance by processing multiple tasks simultaneously with parallel execution.
-* [Workflow Handoff](./examples/workflow-handoff) - Create seamless transitions between specialized agents to solve complex problems.
-* [Workflow Reflection](./examples/workflow-reflection) - Enable self-improvement through output evaluation and refinement capabilities.
-* [Workflow Orchestration](./examples/workflow-orchestration) - Coordinate multiple agents working together in sophisticated processing pipelines.
-* [Workflow Code Execution](./examples/workflow-code-execution) - Safely execute dynamically generated code within AI-driven workflows.
-* [Workflow Group Chat](./examples/workflow-group-chat) - Share messages and interact with multiple agents in a group chat environment.
 
 ## Contributing and Releasing
 
