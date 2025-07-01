@@ -28,7 +28,7 @@ AIGNE Framework is a functional AI application development framework designed to
 * **Flexible Workflow Patterns**: Support for sequential, concurrent, routing, handoff and other workflow patterns to meet various complex application requirements.
 * **MCP Protocol Integration**: Seamless integration with external systems and services through the Model Context Protocol.
 * **Code Execution Capabilities**: Support for executing dynamically generated code in a secure sandbox, enabling more powerful automation capabilities.
-* **Blocklet Ecosystem Integration**: Closely integrated with the Blocklet ecosystem, providing developers with a one-stop solution for development and deployment.
+* **Blocklet Ecosystem Integration**: Closely integrated with ArcBlock's Blocklet ecosystem, providing developers with a one-stop solution for development and deployment.
 
 ## Quick Start
 
@@ -105,26 +105,6 @@ console.log(result2);
 //   B: "Sunshine warms the earth,  \nGentle breeze whispers softly,  \nNature sings with joy.  ",
 // }
 ```
-
-## Packages
-
-* [examples](./examples) - Example project demonstrating how to use different agents to handle various tasks.
-* [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
-* [packages/agent-library](./packages/agent-library) - AIGNE agent library, providing a variety of specialized agents for different tasks.
-* [packages/cli](./packages/cli) - Command-line interface for AIGNE Framework, providing tools for project management and deployment.
-* models - AIGNE Framework's built-in models, including OpenAI, Gemini, Claude, and Nova.
-  * [models/openai](./models/openai) - OpenAI model implementation, supporting OpenAI's API and function calling.
-  * [models/anthropic](./models/anthropic) - Anthropic model implementation, supporting Anthropic's API and function calling.
-  * [models/bedrock](./models/bedrock) - Bedrock model implementation, supporting Bedrock's API and function calling.
-  * [models/deepseek](./models/deepseek) - DeepSeek model implementation, supporting DeepSeek's API and function calling.
-  * [models/gemini](./models/gemini) - Gemini model implementation, supporting Gemini's API and function calling.
-  * [models/ollama](./models/ollama) - Ollama model implementation, supporting Ollama's API and function calling.
-  * [models/open-router](./models/open-router) - OpenRouter model implementation, supporting OpenRouter's API and function calling.
-  * [models/xai](./models/xai) - XAI model implementation, supporting XAI's API and function calling.
-
-## Documentation
-
-[AIGNE Framework Documentation](https://www.arcblock.io/docs/aigne-framework) provides comprehensive guides and API references to help developers quickly get started and master the framework.
 
 ## Simplifying Agentic Workflows
 
@@ -322,6 +302,25 @@ Built-in MCP support allows the AIGNE framework to effortlessly run its own MCP 
 * [SQLite MCP Server](./examples/mcp-sqlite) - Explore database operations by connecting to SQLite through the Model Context Protocol.
 * [Github](./examples/mcp-github) - Interact with GitHub repositories using the GitHub MCP Server.
 
+## Packages
+
+* [examples](./examples) - Example project demonstrating how to use different agents to handle various tasks.
+* [packages/core](./packages/core) - Core package providing the foundation for building AIGNE applications.
+* [packages/agent-library](./packages/agent-library) - AIGNE agent library, providing a variety of specialized agents for different tasks.
+* [packages/cli](./packages/cli) - Command-line interface for AIGNE Framework, providing tools for project management and deployment.
+* models - AIGNE Framework's built-in models, including OpenAI, Gemini, Claude, and Nova.
+  * [models/openai](./models/openai) - OpenAI model implementation, supporting OpenAI's API and function calling.
+  * [models/anthropic](./models/anthropic) - Anthropic model implementation, supporting Anthropic's API and function calling.
+  * [models/bedrock](./models/bedrock) - Bedrock model implementation, supporting Bedrock's API and function calling.
+  * [models/deepseek](./models/deepseek) - DeepSeek model implementation, supporting DeepSeek's API and function calling.
+  * [models/gemini](./models/gemini) - Gemini model implementation, supporting Gemini's API and function calling.
+  * [models/ollama](./models/ollama) - Ollama model implementation, supporting Ollama's API and function calling.
+  * [models/open-router](./models/open-router) - OpenRouter model implementation, supporting OpenRouter's API and function calling.
+  * [models/xai](./models/xai) - XAI model implementation, supporting XAI's API and function calling.
+
+## Documentation
+
+[AIGNE Framework Documentation](https://www.arcblock.io/docs/aigne-framework) provides comprehensive guides and API references to help developers quickly get started and master the framework.
 
 ## Contributing and Releasing
 
