@@ -286,3 +286,132 @@ exports[`TeamAgent with sequential mode should yield output chunks correctly 1`]
   },
 ]
 `;
+
+exports[`TeamAgent with iterateOn should process array input correctly 1`] = `
+{
+  "sections": [
+    {
+      "description": "Description for Test title 0",
+    },
+    {
+      "description": "Description for Test title 1",
+    },
+    {
+      "description": "Description for Test title 2",
+    },
+  ],
+}
+`;
+
+exports[`TeamAgent with iterateOn should process array input correctly 2`] = `
+[
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 0",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 1",
+  },
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 2",
+  },
+]
+`;
+
+exports[`TeamAgent with iterateOn should iterate with previous step's output 1`] = `
+{
+  "sections": [
+    {
+      "description": "Description for Test title 0",
+    },
+    {
+      "description": "Description for Test title 1",
+    },
+    {
+      "description": "Description for Test title 2",
+    },
+  ],
+}
+`;
+
+exports[`TeamAgent with iterateOn should iterate with previous step's output 2`] = `
+[
+  {
+    "sections": [
+      {
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 0",
+  },
+  {
+    "sections": [
+      {
+        "description": "Description for Test title 0",
+        "title": "Test title 0",
+      },
+      {
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 1",
+  },
+  {
+    "sections": [
+      {
+        "description": "Description for Test title 0",
+        "title": "Test title 0",
+      },
+      {
+        "description": "Description for Test title 1",
+        "title": "Test title 1",
+      },
+      {
+        "title": "Test title 2",
+      },
+    ],
+    "title": "Test title 2",
+  },
+]
+`;

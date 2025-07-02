@@ -1,5 +1,7 @@
+import assert from "node:assert";
+import { produce } from "immer";
 import { mergeAgentResponseChunk } from "../utils/stream-utils.js";
-import { type PromiseOrValue, isEmpty } from "../utils/type-utils.js";
+import { type PromiseOrValue, isEmpty, isNil, isRecord, omit } from "../utils/type-utils.js";
 import {
   Agent,
   type AgentInvokeOptions,
@@ -7,6 +9,7 @@ import {
   type AgentProcessResult,
   type AgentResponseChunk,
   type Message,
+  agentProcessResultToObject,
   isAgentResponseDelta,
 } from "./agent.js";
 
@@ -45,6 +48,44 @@ export interface TeamAgentOptions<I extends Message, O extends Message> extends 
    * @default {ProcessMode.sequential}
    */
   mode?: ProcessMode;
+
+  /**
+   * Specifies which input field should be treated as an array for iterative processing.
+   *
+   * When this property is set, the TeamAgent will iterate over the array values in the
+   * specified input field, processing each element individually through the team's agents.
+   * The results from each iteration are accumulated and returned as a streaming response.
+   *
+   * This is particularly useful for batch processing scenarios where you need to apply
+   * the same agent workflow to multiple similar data items.
+   *
+   * @remarks
+   * - The specified field must contain an array or array-like value
+   * - Each array element should be an object that can be merged with the base input
+   * - Non-array values will be treated as single-element arrays
+   * - The processing results are streamed incrementally as each iteration completes
+   */
+  iterateOn?: keyof I;
+
+  /**
+   * Controls whether to merge the output from each iteration back into the array items
+   * for subsequent iterations when using `iterateOn`.
+   *
+   * When set to `true`, the output from processing each array element is merged back
+   * into that element, making it available for the next iteration. This creates a
+   * cumulative effect where each iteration builds upon the results of previous ones.
+   *
+   * When set to `false` or undefined, each array element is processed independently
+   * without any cross-iteration data sharing.
+   *
+   * This is particularly useful for scenarios where:
+   * - You need to progressively enrich data across iterations
+   * - Later iterations depend on the results of earlier ones
+   * - You want to build a chain of transformations on array data
+   *
+   * @default false
+   */
+  iterateWithPreviousOutput?: boolean;
 }
 
 /**
@@ -93,6 +134,8 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
   constructor(options: TeamAgentOptions<I, O>) {
     super(options);
     this.mode = options.mode ?? ProcessMode.sequential;
+    this.iterateOn = options.iterateOn;
+    this.iterateWithPreviousOutput = options.iterateWithPreviousOutput;
   }
 
   /**
@@ -101,6 +144,27 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
    * This can be either sequential (one after another) or parallel (all at once).
    */
   mode: ProcessMode;
+
+  /**
+   * The input field key to iterate over when processing array inputs.
+   *
+   * When set, this property enables the TeamAgent to process array values iteratively,
+   * where each array element is processed individually through the team's agent workflow.
+   * The accumulated results are returned via streaming response chunks.
+   *
+   * @see TeamAgentOptions.iterateOn for detailed documentation
+   */
+  iterateOn?: keyof I;
+
+  /**
+   * Controls whether to merge the output from each iteration back into the array items
+   * for subsequent iterations when using `iterateOn`.
+   *
+   * @see TeamAgentOptions.iterateWithPreviousOutput for detailed documentation
+   *
+   * @default false
+   */
+  iterateWithPreviousOutput?: boolean;
 
   /**
    * Process an input message by routing it through the team's agents.
@@ -115,6 +179,53 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
    * @returns A stream of message chunks that collectively form the response
    */
   process(input: I, options: AgentInvokeOptions): PromiseOrValue<AgentProcessResult<O>> {
+    if (this.iterateOn) {
+      return this._processIterator(this.iterateOn, input, options);
+    }
+
+    return this._process(input, options);
+  }
+
+  private async *_processIterator(
+    key: keyof I,
+    input: I,
+    options: AgentInvokeOptions,
+  ): AsyncGenerator<AgentResponseChunk<O>> {
+    assert(this.iterateOn, "iterateInputKey must be defined for iterator processing");
+    let arr = input[this.iterateOn] as unknown[];
+    arr = Array.isArray(arr) ? [...arr] : isNil(arr) ? [arr] : [];
+
+    const result: Message[] = [];
+
+    for (let i = 0; i < arr.length; i++) {
+      const item = arr[i];
+
+      if (!isRecord(item))
+        throw new TypeError(`Expected ${String(key)} to be an object, got ${typeof item}`);
+
+      const res = await agentProcessResultToObject(
+        await this._process({ ...input, [key]: arr, ...item }, { ...options, streaming: false }),
+      );
+
+      // Merge the item result with the original item used for next iteration
+      if (this.iterateWithPreviousOutput) {
+        arr = produce(arr, (draft) => {
+          const item = draft[i];
+          assert(item);
+          Object.assign(item, res);
+        });
+      }
+
+      result.push(omit(res, key as any) as Message);
+
+      yield { delta: { json: { [key]: result } } } as AgentResponseChunk<O>;
+    }
+  }
+
+  private _process(
+    input: Message,
+    options: AgentInvokeOptions,
+  ): PromiseOrValue<AgentProcessResult<O>> {
     switch (this.mode) {
       case ProcessMode.sequential:
         return this._processSequential(input, options);
@@ -139,7 +250,7 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
    * @private
    */
   async *_processSequential(
-    input: I,
+    input: Message,
     options: AgentInvokeOptions,
   ): PromiseOrValue<AgentProcessResult<O>> {
     const output: Message = {};
@@ -181,7 +292,7 @@ export class TeamAgent<I extends Message, O extends Message> extends Agent<I, O>
    * @private
    */
   async *_processParallel(
-    input: I,
+    input: Message,
     options: AgentInvokeOptions,
   ): PromiseOrValue<AgentProcessResult<O>> {
     const result = await Promise.all(
