@@ -2,6 +2,7 @@ import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
 import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { stringify } from "yaml";
 import { ZodObject, type ZodType } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { Agent, type AgentInvokeOptions, type Message } from "../agents/agent.js";
 import type { AIAgent } from "../agents/ai-agent.js";
 import type {
@@ -17,6 +18,7 @@ import type { Memory } from "../memory/memory.js";
 import { outputSchemaToResponseFormatSchema } from "../utils/json-schema.js";
 import { unique } from "../utils/type-utils.js";
 import { MEMORY_MESSAGE_TEMPLATE } from "./prompts/memory-message-template.js";
+import { STRUCTURED_STREAM_INSTRUCTIONS } from "./prompts/structured-stream-instructions.js";
 import {
   AgentMessageTemplate,
   ChatMessagesTemplate,
@@ -29,7 +31,7 @@ export interface PromptBuilderOptions {
   instructions?: string | ChatMessagesTemplate;
 }
 
-export interface PromptBuildOptions extends Pick<AgentInvokeOptions, "context"> {
+export interface PromptBuildOptions extends Partial<Pick<AgentInvokeOptions, "context">> {
   agent?: AIAgent;
   input?: Message;
   model?: ChatModel;
@@ -91,7 +93,9 @@ export class PromptBuilder {
   async build(options: PromptBuildOptions): Promise<ChatModelInput & { toolAgents?: Agent[] }> {
     return {
       messages: await this.buildMessages(options),
-      responseFormat: this.buildResponseFormat(options),
+      responseFormat: options.agent?.structuredStreamMode
+        ? undefined
+        : this.buildResponseFormat(options),
       ...this.buildTools(options),
     };
   }
@@ -110,15 +114,37 @@ export class PromptBuilder {
 
     const memories: Pick<Memory, "content">[] = [];
 
-    if (options.agent?.inputKey) {
-      memories.push(...(await options.agent.retrieveMemories({ search: message }, options)));
+    if (options.agent?.inputKey && options.context) {
+      memories.push(
+        ...(await options.agent.retrieveMemories(
+          { search: message },
+          { context: options.context },
+        )),
+      );
     }
 
-    if (options.context.memories?.length) {
+    if (options.context?.memories?.length) {
       memories.push(...options.context.memories);
     }
 
     if (memories.length) messages.push(...this.convertMemoriesToMessages(memories, options));
+
+    // if the agent is using structured stream mode, add the instructions
+    const { structuredStreamMode, outputSchema } = options.agent || {};
+    if (structuredStreamMode && outputSchema) {
+      const instructions =
+        options.agent?.customStructuredStreamInstructions?.instructions ||
+        PromptBuilder.from(STRUCTURED_STREAM_INSTRUCTIONS.instructions);
+
+      messages.push(
+        ...(await instructions.buildMessages({
+          input: {
+            ...input,
+            outputJsonSchema: zodToJsonSchema(outputSchema),
+          },
+        })),
+      );
+    }
 
     if (message) {
       messages.push({
