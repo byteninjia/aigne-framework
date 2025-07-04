@@ -18,8 +18,8 @@ import {
   type DefaultMemoryStorageOptions,
 } from "../default-memory/default-memory-storage/index.js";
 import {
-  type DefaultMemoryRecorderOptions,
   DefaultMemoryRetriever,
+  type DefaultMemoryRetrieverOptions,
 } from "../default-memory/index.js";
 import { MemoryStorage } from "../default-memory/storage.js";
 import { DEFAULT_FS_MEMORY_RECORDER_INSTRUCTIONS } from "./prompt.js";
@@ -51,9 +51,9 @@ export class AgenticMemory extends MemoryAgent {
   storage: MemoryStorage;
 }
 
-export interface AgenticMemoryRetrieverOptions extends DefaultMemoryRecorderOptions {}
+export interface AgenticMemoryRetrieverOptions extends DefaultMemoryRetrieverOptions {}
 
-class AgenticMemoryRetriever extends DefaultMemoryRetriever {}
+export class AgenticMemoryRetriever extends DefaultMemoryRetriever {}
 
 export interface AgenticMemoryRecorderOptions
   extends AgentOptions<MemoryRecorderInput, MemoryRecorderOutput> {
@@ -74,7 +74,7 @@ export interface AgenticMemoryExtractorOutput extends Message {
   }[];
 }
 
-class AgenticMemoryRecorder extends MemoryRecorder {
+export class AgenticMemoryRecorder extends MemoryRecorder {
   constructor(options: AgenticMemoryRecorderOptions) {
     super(options);
     this.storage = options.storage;
