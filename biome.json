@@ -7,14 +7,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": [
-      "**",
-      "!**/lib/**",
-      "!**/dist/**",
-      "!**/package.json",
-      "!**/.oauth/**",
-      "!**/.blocklet/**",
-      "!observability/api/api/server/utils/modelPricesAndContextWindow.json"
+    "experimentalScannerIgnores": [
+      "node_modules",
+      "**/node_modules/**",
+      "**/lib/**",
+      "**/dist/**",
+      "**/package.json",
+      "**/.oauth/**",
+      "**/.blocklet/**",
+      "observability/api/api/server/utils/modelPricesAndContextWindow.json"
     ]
   },
   "formatter": {
