@@ -48,10 +48,12 @@
   },
   "dependencies": {
     "@aigne/agent-library": "workspace:^",
+    "@aigne/agentic-memory": "workspace:^",
     "@aigne/anthropic": "workspace:^",
     "@aigne/bedrock": "workspace:^",
     "@aigne/core": "workspace:^",
     "@aigne/deepseek": "workspace:^",
+    "@aigne/default-memory": "workspace:^",
     "@aigne/gemini": "workspace:^",
     "@aigne/listr2": "^1.0.10",
     "@aigne/marked-terminal": "^7.3.2",

@@ -1,11 +1,12 @@
 import type { Agent } from "node:https";
 import { createRequire } from "node:module";
-import { DefaultMemory } from "@aigne/agent-library/default-memory/index.js";
+import { AgenticMemory } from "@aigne/agentic-memory";
 import { AIGNEHubChatModel } from "@aigne/aigne-hub";
 import { AnthropicChatModel } from "@aigne/anthropic";
 import { BedrockChatModel } from "@aigne/bedrock";
 import type { LoadableModel } from "@aigne/core/loader/index.js";
 import { DeepSeekChatModel } from "@aigne/deepseek";
+import { DefaultMemory } from "@aigne/default-memory";
 import { GeminiChatModel } from "@aigne/gemini";
 import { OllamaChatModel } from "@aigne/ollama";
 import { OpenRouterChatModel } from "@aigne/open-router";
@@ -13,6 +14,7 @@ import { OpenAIChatModel } from "@aigne/openai";
 import { XAIChatModel } from "@aigne/xai";
 import { NodeHttpHandler, streamCollector } from "@smithy/node-http-handler";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import type { ClientOptions } from "openai";
 
 const require = createRequire(import.meta.url);
 
@@ -24,7 +26,12 @@ export function availableModels(): LoadableModel[] {
     .filter(Boolean)[0];
 
   const httpAgent = proxy ? (new HttpsProxyAgent(proxy) as Agent) : undefined;
-  const clientOptions = { fetchOptions: { agent: httpAgent } };
+  const clientOptions: ClientOptions = {
+    fetchOptions: {
+      // @ts-ignore
+      agent: httpAgent,
+    },
+  };
 
   return [
     {
@@ -73,4 +80,4 @@ export function availableModels(): LoadableModel[] {
   ];
 }
 
-export const availableMemories = [DefaultMemory];
+export const availableMemories = [DefaultMemory, AgenticMemory];
