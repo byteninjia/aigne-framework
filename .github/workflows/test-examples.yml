@@ -20,7 +20,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v3
         with:
           name: release-created
-          workflow: Release
+          workflow: release.yml
           path: ./artifacts
           if_no_artifact_found: ignore
 
