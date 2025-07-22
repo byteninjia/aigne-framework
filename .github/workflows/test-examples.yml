@@ -22,6 +22,7 @@ jobs:
           name: release-created
           workflow: Release
           path: ./artifacts
+          if_no_artifact_found: ignore
 
       - name: Check artifact
         id: check
