@@ -25,7 +25,13 @@ interface LoadableModelClass {
 
 export interface LoadableModel {
   name: string;
-  create: (options: { model?: string; modelOptions?: ChatModelOptions }) => ChatModel;
+  apiKeyEnvName?: string;
+  create: (options: {
+    model?: string;
+    modelOptions?: ChatModelOptions;
+    accessKey?: string;
+    url?: string;
+  }) => ChatModel;
 }
 
 export interface LoadOptions {
@@ -224,6 +230,7 @@ export async function loadModel(
   models: LoadableModel[],
   model?: Camelize<z.infer<typeof aigneFileSchema>["model"]>,
   modelOptions?: ChatModelOptions,
+  accessKeyOptions?: { accessKey?: string; url?: string },
 ): Promise<ChatModel | undefined> {
   const params = {
     model: MODEL_NAME ?? model?.name ?? undefined,
@@ -233,13 +240,14 @@ export async function loadModel(
     presencePenalty: model?.presencePenalty ?? undefined,
   };
 
-  const m = models.find((m) =>
-    m.name
-      .toLowerCase()
-      .includes((MODEL_PROVIDER ?? model?.provider ?? DEFAULT_MODEL_PROVIDER).toLowerCase()),
-  );
+  const providerName = MODEL_PROVIDER ?? model?.provider ?? DEFAULT_MODEL_PROVIDER;
+  const provider = providerName.replace(/-/g, "");
+
+  const m = models.find((m) => m.name.toLowerCase().includes(provider.toLowerCase()));
   if (!m) throw new Error(`Unsupported model: ${model?.provider} ${model?.name}`);
+
   return m.create({
+    ...(accessKeyOptions || {}),
     model: params.model,
     modelOptions: { ...params, ...modelOptions },
   });
