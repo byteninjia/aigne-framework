@@ -1,0 +1,16 @@
+{"choices": [{"delta": {"content": "{"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "\"text\""}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": ":"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " \""}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "The"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " current"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " temperature"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " in"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " New"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " York"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " is"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " 20"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "°C"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": ".\""}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "}"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"usage": {"prompt_tokens": 45, "completion_tokens": 18}, "model": "meta-llama/Llama-3.1-8B-Instruct"}

@@ -1,0 +1,14 @@
+{"choices": [{"delta": {"content": "Hello"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "! I'm"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " an"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " AI"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " assistant"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "."}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " How"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " can"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " I"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " help"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " you"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": " today"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"choices": [{"delta": {"content": "?"}}], "model": "meta-llama/Llama-3.1-8B-Instruct"}
+{"usage": {"prompt_tokens": 8, "completion_tokens": 13}, "model": "meta-llama/Llama-3.1-8B-Instruct"}
