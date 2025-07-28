@@ -311,6 +311,8 @@ describe("load aigne", () => {
     });
 
     test("should return model as-is when NODE_ENV is test", async () => {
+      process.env.OPENAI_API_KEY = undefined;
+
       const result = await formatModelName(mockModels, "openai:gpt-4", mockInquirerPrompt);
       expect(result).toBe("aignehub:openai/gpt-4");
     });
@@ -352,6 +354,8 @@ describe("load aigne", () => {
     });
 
     test("should handle complex model names", async () => {
+      process.env.ANTHROPIC_API_KEY = undefined;
+
       const result = await formatModelName(
         mockModels,
         "anthropic:claude-3-sonnet",
