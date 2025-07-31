@@ -1,3 +1,4 @@
+import open from "open";
 import { joinURL } from "ufo";
 import { DISCUSS_KIT_DID } from "./constants.js";
 import type { DocNode } from "./generator.js";
@@ -11,16 +12,16 @@ export async function publisher(input: {
   };
   appUrl: string;
   accessToken: string;
+  autoOpen?: boolean;
 }): Promise<PublishResult> {
   try {
-    const { data, appUrl, accessToken } = input;
+    const { data, appUrl, accessToken, autoOpen } = input;
 
     const url = new URL(appUrl);
     const mountPoint = await getComponentMountPoint(appUrl, DISCUSS_KIT_DID);
     console.log(`Found Discuss Kit mount point: ${mountPoint}`);
 
     const publishUrl = joinURL(url.origin, mountPoint, "/api/docs/create-docs-collection");
-    console.log(`Publishing docs collection to ${publishUrl}`);
 
     const response = await fetch(publishUrl, {
       method: "POST",
@@ -39,7 +40,25 @@ export async function publisher(input: {
     }
 
     const result = await response.json();
-    return { success: true, docs: result.docs, boardId: data.boardId };
+
+    const docsUrl = joinURL(url.origin, mountPoint, "/docs", data.boardId);
+
+    console.log(`Publishing docs collection...`);
+    console.log(`📖 Docs available at: ${docsUrl}`);
+
+    // Auto open docs page in browser
+    if (autoOpen) {
+      try {
+        await open(docsUrl);
+        console.log(`✅ Opened docs in browser`);
+      } catch (openError) {
+        console.log(
+          `⚠️  Failed to open browser: ${openError instanceof Error ? openError.message : String(openError)}`,
+        );
+      }
+    }
+
+    return { success: true, docs: result.docs, boardId: data.boardId, docsUrl };
   } catch (error) {
     console.error("Error publishing docs post:", error);
     return {
