@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 import { runAgentWithAIGNE } from "@aigne/cli/utils/run-with-aigne.js";
 import { AIAgent, AIGNE } from "@aigne/core";
 import { OpenAIChatModel } from "@aigne/openai";
@@ -31,10 +32,14 @@ test("runAgentWithAIGNE should work in Node.js", async () => {
 });
 
 test("AIGNE cli should work in Node.js", async () => {
-  const { status, stdout } = spawnSync("npx", ["aigne", "--version"], { stdio: "pipe" });
+  const { status, stdout } = spawnSync("aigne", ["--version"], {
+    stdio: "pipe",
+    env: {
+      ...process.env,
+      PATH: `${join(import.meta.dirname, "node_modules/.bin")}:${process.env.PATH}`,
+    },
+  });
 
-  console.log({ status, stdout: stdout.toString() });
-
-  expect(status).toBe(0);
   expect(stdout.toString()).toMatch(/\d+\.\d+\.\d+/);
+  expect(status).toBe(0);
 });
