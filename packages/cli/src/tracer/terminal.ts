@@ -11,6 +11,7 @@ import {
   DEFAULT_OUTPUT_KEY,
   type InvokeOptions,
   type Message,
+  UserAgent,
 } from "@aigne/core";
 import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { promiseWithResolvers } from "@aigne/core/utils/promise.js";
@@ -56,6 +57,8 @@ export class TerminalTracer {
     );
 
     const onStart: AgentHooks["onStart"] = async ({ context, agent, ...event }) => {
+      if (agent instanceof UserAgent) return;
+
       const contextId = context.id;
       const parentContextId = context.parentId;
 
