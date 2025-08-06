@@ -47,7 +47,10 @@ jobs:
         run: pnpm install
 
       - name: Build project
-        run: pnpm --filter='!test-browser' build # @aigne/test-browser deps vite that is not support node 20.0, skip it
+        # @aigne/test-browser deps vite that is not support node 20.0, skip it
+        run: |
+          pnpm --filter='!test-browser' build
+          pnpm install
 
       - name: Run Node.js tests
         working-directory: tests/nodejs
