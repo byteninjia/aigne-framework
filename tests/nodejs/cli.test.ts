@@ -31,14 +31,15 @@ test("runAgentWithAIGNE should work in Node.js", async () => {
 });
 
 test("AIGNE cli should work in Node.js", async () => {
-  const { status, stdout } = spawnSync("aigne", ["--version"], {
+  const { status, stdout, stderr } = spawnSync("aigne", ["--version"], {
     encoding: "utf8",
     stdio: "pipe",
     shell: true,
   });
 
-  expect({ status, stdout }).toEqual({
+  expect({ status, stdout, stderr }).toEqual({
     status: 0,
     stdout: expect.stringMatching(/\d+\.\d+\.\d+/),
+    stderr: expect.anything(),
   });
 });
