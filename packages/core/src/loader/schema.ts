@@ -1,8 +1,8 @@
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
-import camelize from "camelize-ts";
 import { parse } from "yaml";
 import { type ZodType, z } from "zod";
 import { DEFAULT_INPUT_ACTION_GET } from "../agents/agent.js";
+import { camelize } from "../utils/camelize.js";
 import { isRecord } from "../utils/type-utils.js";
 
 export const inputOutputSchema = ({ path }: { path: string }) => {
