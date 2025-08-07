@@ -21,9 +21,9 @@ AIGNE Anthropic SDK for integrating with Claude AI models within the [AIGNE Fram
 `@aigne/anthropic` provides a seamless integration between the AIGNE Framework and Anthropic's Claude language models and API. This package enables developers to easily leverage Anthropic's Claude models in their AIGNE applications, providing a consistent interface across the framework while taking advantage of Claude's advanced AI capabilities.
 
 <picture>
-  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/refs/heads/chore-readme-arch/assets/aigne-anthropic-dark.png" media="(prefers-color-scheme: dark)">
-  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/refs/heads/chore-readme-arch/assets/aigne-anthropic.png" media="(prefers-color-scheme: light)">
-  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/refs/heads/chore-readme-arch/aigne-anthropic.png" alt="AIGNE Arch" />
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-anthropic-dark.png" media="(prefers-color-scheme: dark)">
+  <source srcset="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/assets/aigne-anthropic.png" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/AIGNE-io/aigne-framework/main/aigne-anthropic.png" alt="AIGNE Arch" />
 </picture>
 
 ## Features
