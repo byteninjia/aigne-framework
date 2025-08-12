@@ -122,6 +122,7 @@ export function createRunCommand({
                   },
                 },
               });
+
               Object.assign(console, originalLog);
 
               ctx.aigne = aigne;
