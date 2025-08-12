@@ -57,10 +57,12 @@ export function createRunCommand({
       if (options.logLevel) logger.level = options.logLevel;
 
       const { cacheDir, dir } = prepareDirs(path, options);
+      const originalLog: Record<string, (...args: any[]) => void> = {};
 
       const { aigne, agent } = await new Listr<{
         aigne: AIGNE;
         agent: Agent;
+        logs: string[];
       }>(
         [
           {
@@ -86,14 +88,25 @@ export function createRunCommand({
               // Load env files in the aigne directory
               config({ path: dir, silent: true });
 
-              const aigne = await loadAIGNE(
-                dir,
-                {
+              ctx.logs = [];
+
+              for (const method of ["debug", "log", "info", "warn", "error"] as const) {
+                originalLog[method] = console[method];
+
+                console[method] = (...args) => {
+                  ctx.logs.push(...args);
+                  task.output = args.join(" ");
+                };
+              }
+
+              const aigne = await loadAIGNE({
+                path: dir,
+                options: {
                   ...options,
                   model: options.model || process.env.MODEL,
                   aigneHubUrl: options?.aigneHubUrl,
                 },
-                {
+                actionOptions: {
                   inquirerPromptFn: (prompt) => {
                     if (prompt.type === "input") {
                       return task
@@ -108,7 +121,8 @@ export function createRunCommand({
                       .then((res: boolean) => ({ [prompt.name]: res }));
                   },
                 },
-              );
+              });
+              Object.assign(console, originalLog);
 
               ctx.aigne = aigne;
             },
@@ -146,7 +160,12 @@ ${aigne.agents.map((agent) => `  - ${agent.name}`).join("\n")}
             timer: PRESET_TIMER,
           },
         },
-      ).run();
+      )
+        .run()
+        .then((ctx) => {
+          ctx.logs.forEach((log) => console.log(log));
+          return ctx;
+        });
 
       assert(aigne);
       assert(agent);
