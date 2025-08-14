@@ -13,7 +13,6 @@ import {
   type Message,
   UserAgent,
 } from "@aigne/core";
-import { LogLevel, logger } from "@aigne/core/utils/logger.js";
 import { promiseWithResolvers } from "@aigne/core/utils/promise.js";
 import { flat, omit } from "@aigne/core/utils/type-utils.js";
 import { figures, type Listr } from "@aigne/listr2";
@@ -27,7 +26,6 @@ import { highlightUrl } from "../utils/string-utils.js";
 import { parseDuration } from "../utils/time.js";
 
 export interface TerminalTracerOptions {
-  printRequest?: boolean;
   outputKey?: string;
 }
 
@@ -47,9 +45,7 @@ export class TerminalTracer {
     const listr = new AIGNEListr(
       {
         formatRequest: (options?: { running?: boolean }) =>
-          this.options.printRequest
-            ? this.formatRequest(agent, context, input, options)
-            : undefined,
+          this.formatRequest(agent, context, input, options),
         formatResult: (result, options?: { running?: boolean }) =>
           [this.formatResult(agent, context, result, options)].filter(Boolean),
       },
@@ -302,8 +298,6 @@ export class TerminalTracer {
   }
 
   formatRequest(agent: Agent, _context: Context, m: Message = {}, { running = false } = {}) {
-    if (!logger.enabled(LogLevel.INFO)) return;
-
     const prefix = `${chalk.grey(figures.pointer)} 💬 `;
 
     const inputKey = agent instanceof AIAgent ? agent.inputKey : undefined;
@@ -319,16 +313,17 @@ export class TerminalTracer {
         ? inspect(message, { colors: true, ...(running ? this.runningInspectOptions : undefined) })
         : undefined;
 
-    return [prefix, [text, json].filter(Boolean).join(EOL)].join(" ");
+    const r = [text, json].filter(Boolean).join(EOL).trim();
+    if (!r) return undefined;
+
+    return `${prefix}${r}`;
   }
 
   formatResult(agent: Agent, context: Context, m: Message = {}, { running = false } = {}) {
     const { isTTY } = process.stdout;
     const outputKey = this.outputKey || (agent instanceof AIAgent ? agent.outputKey : undefined);
 
-    const prefix = logger.enabled(LogLevel.INFO)
-      ? `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`
-      : null;
+    const prefix = `${chalk.grey(figures.tick)} 🤖 ${this.formatTokenUsage(context.usage)}`;
 
     const msg = outputKey ? m[outputKey] : undefined;
     const message = outputKey ? omit(m, outputKey) : m;
@@ -345,7 +340,7 @@ export class TerminalTracer {
         ? inspect(message, { colors: isTTY, ...(running ? this.runningInspectOptions : undefined) })
         : undefined;
 
-    return [prefix, text, json].filter(Boolean).join(EOL);
+    return [prefix, text, json].filter(Boolean).join(EOL.repeat(2));
   }
 
   protected runningInspectOptions: InspectOptions = {

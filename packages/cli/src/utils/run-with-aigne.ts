@@ -319,10 +319,7 @@ export async function runAgentWithAIGNE(
     return;
   }
 
-  const tracer = new TerminalTracer(aigne.newContext(), {
-    printRequest: logger.enabled(LogLevel.INFO),
-    outputKey,
-  });
+  const tracer = new TerminalTracer(aigne.newContext(), { outputKey });
 
   const { result } = await tracer.run(agent, options.input ?? {});
 
