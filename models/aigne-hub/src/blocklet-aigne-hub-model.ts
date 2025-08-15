@@ -81,7 +81,9 @@ export class AIGNEHubChatModel extends ChatModel {
     }
 
     options.fetchOptions = {
-      headers: { "x-aigne-hub-client-did": process.env.BLOCKLET_APP_PID || "" },
+      headers: {
+        "x-aigne-hub-client-did": process.env.BLOCKLET_APP_PID || process.env.ABT_NODE_DID || "",
+      },
       ...options.fetchOptions,
     };
 
