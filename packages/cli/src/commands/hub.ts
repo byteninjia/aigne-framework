@@ -7,6 +7,7 @@ import inquirer from "inquirer";
 import { parse, stringify } from "yaml";
 import type { CommandModule } from "yargs";
 import { getUserInfo } from "../utils/aigne-hub-user.js";
+import { getUrlOrigin } from "../utils/get-url-origin.js";
 
 interface StatusInfo {
   host: string;
@@ -134,8 +135,8 @@ async function formatHubsList(statusList: StatusInfo[]) {
   console.log(chalk.blue("Connected AIGNE Hubs:\n"));
 
   for (const status of statusList) {
-    const isConnected = new URL(status.apiUrl).origin === new URL(defaultHub).origin;
-    table.push([status.apiUrl, isConnected ? "YES" : "NO"]);
+    const isConnected = getUrlOrigin(status.apiUrl) === getUrlOrigin(defaultHub);
+    table.push([getUrlOrigin(status.apiUrl), isConnected ? "YES" : "NO"]);
   }
 
   console.log(table.toString());
@@ -220,7 +221,7 @@ async function useHub() {
     name: "hubApiKey",
     message: `Choose a hub to switch to:`,
     choices: hubs.map((h) => ({
-      name: new URL(h.apiUrl).origin,
+      name: getUrlOrigin(h.apiUrl),
       value: h.apiUrl,
     })),
   });
@@ -234,7 +235,7 @@ async function showStatus() {
     console.log(chalk.red("No active hub."));
     return;
   }
-  console.log(`Active hub: ${active} - online`);
+  console.log(`Active hub: ${getUrlOrigin(active)} - online`);
 }
 
 async function removeHub() {
@@ -249,7 +250,7 @@ async function removeHub() {
     name: "hubApiKey",
     message: `Choose a hub to remove:`,
     choices: hubs.map((h) => ({
-      name: new URL(h.apiUrl).origin,
+      name: getUrlOrigin(h.apiUrl),
       value: h.apiUrl,
     })),
   });
@@ -269,7 +270,7 @@ async function showInfo() {
     name: "hubApiKey",
     message: `Choose a hub to view info:`,
     choices: hubs.map((h) => ({
-      name: new URL(h.apiUrl).origin,
+      name: getUrlOrigin(h.apiUrl),
       value: h.apiUrl,
     })),
   });
@@ -291,9 +292,12 @@ async function saveAndConnect(url: string) {
   const host = new URL(url).host;
 
   if (envs[host]) {
-    await setDefaultHub(envs[host]?.AIGNE_HUB_API_URL || "");
-    console.log(chalk.green(`✓ Hub ${envs[host]?.AIGNE_HUB_API_URL} connected successfully.`));
-    return;
+    const currentUrl = envs[host]?.AIGNE_HUB_API_URL;
+    if (currentUrl) {
+      await setDefaultHub(currentUrl);
+      console.log(chalk.green(`✓ Hub ${getUrlOrigin(currentUrl)} connected successfully.`));
+      return;
+    }
   }
 
   try {
@@ -314,7 +318,7 @@ async function saveAndConnect(url: string) {
     }
 
     await connectToAIGNEHub(url);
-    console.log(chalk.green(`✓ Hub ${url} connected successfully.`));
+    console.log(chalk.green(`✓ Hub ${getUrlOrigin(url)} connected successfully.`));
   } catch (error: any) {
     console.error(chalk.red("✗ Failed to connect:"), error.message);
   }
@@ -333,7 +337,7 @@ async function setDefaultHub(url: string) {
     AIGNE_ENV_FILE,
     stringify({ ...envs, default: { AIGNE_HUB_API_URL: envs[host]?.AIGNE_HUB_API_URL } }),
   );
-  console.log(chalk.green(`✓ Switched active hub to ${url}`));
+  console.log(chalk.green(`✓ Switched active hub to ${getUrlOrigin(url)}`));
 }
 
 async function deleteHub(url: string) {
@@ -346,7 +350,7 @@ async function deleteHub(url: string) {
   }
 
   await writeFile(AIGNE_ENV_FILE, stringify(envs));
-  console.log(chalk.green(`✓ Hub ${url} removed`));
+  console.log(chalk.green(`✓ Hub ${getUrlOrigin(url)} removed`));
 }
 
 async function printHubDetails(url: string) {
@@ -359,7 +363,7 @@ async function printHubDetails(url: string) {
   }).catch(() => null);
 
   printHubStatus({
-    hub: url,
+    hub: getUrlOrigin(url),
     status: userInfo ? "Connected" : "Not connected",
     user: {
       name: userInfo?.user.fullName || "",

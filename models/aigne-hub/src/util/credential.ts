@@ -123,7 +123,7 @@ export async function getAIGNEHubMountPoint(url: string) {
 export async function connectToAIGNEHub(url: string) {
   const { origin, host } = new URL(url);
   const connectUrl = joinURL(origin, WELLKNOWN_SERVICE_PATH_PREFIX);
-  const urlWithAIGNEHubMountPoint = await getAIGNEHubMountPoint(url);
+  const apiUrl = await getAIGNEHubMountPoint(url);
 
   try {
     const openFn = isTest ? () => {} : open;
@@ -137,7 +137,7 @@ export async function connectToAIGNEHub(url: string) {
 
     const accessKeyOptions = {
       apiKey: result.accessKeySecret,
-      url: urlWithAIGNEHubMountPoint,
+      url: apiUrl,
     };
 
     // After redirection, write the AIGNE Hub access token
@@ -192,7 +192,7 @@ export const checkConnectionStatus = async (host: string) => {
 
   return {
     apiKey: env.AIGNE_HUB_API_KEY,
-    url: joinURL(env.AIGNE_HUB_API_URL),
+    url: env.AIGNE_HUB_API_URL,
   };
 };
 
@@ -274,6 +274,8 @@ export async function loadCredential(options?: LoadCredentialOptions) {
         }
 
         credential = await connectToAIGNEHub(aigneHubUrl);
+      } else {
+        throw error;
       }
     }
   }
