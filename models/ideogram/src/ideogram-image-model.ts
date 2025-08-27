@@ -5,6 +5,7 @@ import {
   type ImageModelOutput,
   imageModelInputSchema,
 } from "@aigne/core";
+
 import { snakelize } from "@aigne/core/utils/camelize.js";
 import { checkArguments, pick } from "@aigne/core/utils/type-utils.js";
 import { z } from "zod";
@@ -39,7 +40,6 @@ const ideogramImageModelOptionsSchema = z.object({
   apiKey: z.string().optional(),
   baseURL: z.string().optional(),
   modelOptions: z.object({}).optional(),
-  clientOptions: z.object({}).optional(),
 });
 
 export class IdeogramImageModel extends ImageModel<

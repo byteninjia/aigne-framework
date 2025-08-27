@@ -1,8 +1,8 @@
 import {
   type AgentProcessResult,
-  ChatModel,
-  type ChatModelInput,
-  type ChatModelOutput,
+  ImageModel,
+  type ImageModelInput,
+  type ImageModelOutput,
 } from "@aigne/core";
 import { checkArguments } from "@aigne/core/utils/type-utils.js";
 import { nodejs } from "@aigne/platform-helpers/nodejs/index.js";
@@ -12,16 +12,12 @@ import {
 } from "@aigne/transport/http-client/base-client.js";
 import { joinURL } from "ufo";
 import { getAIGNEHubMountPoint } from "./utils/blocklet.js";
-import {
-  AIGNE_HUB_BLOCKLET_DID,
-  AIGNE_HUB_DEFAULT_MODEL,
-  AIGNE_HUB_URL,
-} from "./utils/constants.js";
-import { type AIGNEHubChatModelOptions, aigneHubModelOptionsSchema } from "./utils/type.js";
+import { AIGNE_HUB_BLOCKLET_DID, AIGNE_HUB_IMAGE_MODEL, AIGNE_HUB_URL } from "./utils/constants.js";
+import { type AIGNEHubImageModelOptions, aigneHubModelOptionsSchema } from "./utils/type.js";
 
-export class AIGNEHubChatModel extends ChatModel {
-  constructor(public options: AIGNEHubChatModelOptions) {
-    checkArguments("AIGNEHubChatModel", aigneHubModelOptionsSchema, options);
+export class AIGNEHubImageModel extends ImageModel {
+  constructor(public options: AIGNEHubImageModelOptions) {
+    checkArguments("AIGNEHubImageModel", aigneHubModelOptionsSchema, options);
     super();
   }
 
@@ -50,7 +46,7 @@ export class AIGNEHubChatModel extends ChatModel {
         AIGNE_HUB_URL,
       AIGNE_HUB_BLOCKLET_DID,
     ).then((url) => {
-      const path = "/api/v2/chat";
+      const path = "/api/v2/image";
 
       const rawCredential = process.env.BLOCKLET_AIGNE_API_CREDENTIAL;
       let credentialOptions: Record<string, any> = {};
@@ -65,8 +61,7 @@ export class AIGNEHubChatModel extends ChatModel {
         ...credentialOptions,
         url: url.endsWith(path) ? url : joinURL(url, path),
         apiKey: this.options.apiKey || process.env.AIGNE_HUB_API_KEY || credentialOptions.apiKey,
-        model:
-          this.options.model || process.env.BLOCKLET_AIGNE_API_MODEL || AIGNE_HUB_DEFAULT_MODEL,
+        model: this.options.model || process.env.BLOCKLET_AIGNE_API_MODEL || AIGNE_HUB_IMAGE_MODEL,
       };
     });
 
@@ -74,9 +69,9 @@ export class AIGNEHubChatModel extends ChatModel {
   }
 
   override async process(
-    input: ChatModelInput,
+    input: ImageModelInput,
     options: BaseClientInvokeOptions,
-  ): Promise<AgentProcessResult<ChatModelOutput>> {
+  ): Promise<AgentProcessResult<ImageModelOutput>> {
     const { BLOCKLET_APP_PID, ABT_NODE_DID } = nodejs.env;
     const clientId =
       this.options?.clientOptions?.clientId ||
@@ -84,15 +79,30 @@ export class AIGNEHubChatModel extends ChatModel {
       ABT_NODE_DID ||
       `@aigne/aigne-hub:${typeof process !== "undefined" ? nodejs.os.hostname() : "unknown"}`;
 
-    return (await this.client).__invoke(undefined, input, {
-      ...options,
-      fetchOptions: {
-        ...options.fetchOptions,
-        headers: {
-          ...options.fetchOptions?.headers,
-          "x-aigne-hub-client-did": clientId,
+    const response = await (await this.client).__invoke<ImageModelInput, ImageModelOutput>(
+      undefined,
+      input,
+      {
+        ...options,
+        streaming: false,
+        fetchOptions: {
+          ...options.fetchOptions,
+          headers: {
+            ...options.fetchOptions?.headers,
+            "x-aigne-hub-client-did": clientId,
+          },
         },
       },
-    });
+    );
+
+    return {
+      images: response.images,
+      usage: {
+        inputTokens: response.usage?.inputTokens ?? 0,
+        outputTokens: response.usage?.outputTokens ?? 0,
+        aigneHubCredits: response.usage?.aigneHubCredits,
+      },
+      model: response?.model,
+    };
   }
 }
