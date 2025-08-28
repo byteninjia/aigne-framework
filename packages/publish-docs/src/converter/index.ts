@@ -21,6 +21,7 @@ import { marked, type RendererObject } from "marked";
 import { findLocalImages, isRemoteUrl } from "../utils/image-finder.js";
 import { slugify } from "../utils/slugify.js";
 import { type UploadFilesOptions, uploadFiles } from "../utils/upload-files.js";
+import { CustomComponentNode } from "./nodes/custom-component-node.js";
 import { ImageNode } from "./nodes/image-node.js";
 import { MermaidNode } from "./nodes/mermaid-node.js";
 
@@ -120,6 +121,7 @@ export class Converter {
         MermaidNode,
         TextNode,
         LineBreakNode,
+        CustomComponentNode,
       ],
     });
 
