@@ -8,9 +8,10 @@ import {
 
 import { snakelize } from "@aigne/core/utils/camelize.js";
 import { checkArguments, pick } from "@aigne/core/utils/type-utils.js";
+import { joinURL } from "ufo";
 import { z } from "zod";
 
-const IDEOGRAM_BASE_URL = "https://api.ideogram.ai/v1/ideogram-v3/generate";
+const IDEOGRAM_BASE_URL = "https://api.ideogram.ai";
 
 export interface IdeogramImageModelInput extends ImageModelInput {
   seed?: number;
@@ -31,6 +32,7 @@ export interface IdeogramImageModelOptions
   extends ImageModelOptions<IdeogramImageModelInput, IdeogramImageModelOutput> {
   apiKey?: string;
   baseURL?: string;
+  model?: string;
   modelOptions?: Omit<Partial<IdeogramImageModelInput>, "model">;
 }
 
@@ -39,6 +41,7 @@ const ideogramImageModelInputSchema = imageModelInputSchema.extend({});
 const ideogramImageModelOptionsSchema = z.object({
   apiKey: z.string().optional(),
   baseURL: z.string().optional(),
+  model: z.string().optional(),
   modelOptions: z.object({}).optional(),
 });
 
@@ -77,6 +80,10 @@ export class IdeogramImageModel extends ImageModel<
     const model = input.model;
     const formData = new FormData();
 
+    if (model !== "ideogram-v3") {
+      throw new Error(`${this.name} only support ideogram-v3`);
+    }
+
     const inputKeys = [
       "prompt",
       "seed",
@@ -108,7 +115,7 @@ export class IdeogramImageModel extends ImageModel<
         `${this.name} requires an API key. Please provide it via \`options.apiKey\`, or set the \`${this.apiKeyEnvName}\` environment variable`,
       );
 
-    const response = await fetch(url, {
+    const response = await fetch(joinURL(new URL(url).origin, `/v1/${model}/generate`), {
       method: "POST",
       headers: { "api-key": apiKey },
       body: formData,

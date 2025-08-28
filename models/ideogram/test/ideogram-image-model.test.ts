@@ -10,7 +10,7 @@ async function createHonoServer() {
 
   const honoApp = new Hono();
 
-  honoApp.post("/", async (c) => {
+  honoApp.post("/v1/:model/generate", async (c) => {
     return c.json({
       data: [{ url: "https://example.com/image.png" }],
     });
@@ -32,7 +32,7 @@ test("IdeogramImageModel should generate images successfully", async () => {
     apiKey: "YOUR_API_KEY",
   });
 
-  const result = await model.invoke({ prompt: "Draw an image about a cat" });
+  const result = await model.invoke({ model: "ideogram-v3", prompt: "Draw an image about a cat" });
 
   expect(result).toEqual(
     expect.objectContaining({
