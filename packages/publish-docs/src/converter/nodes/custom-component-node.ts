@@ -135,6 +135,10 @@ export class CustomComponentNode extends DecoratorBlockNode {
   override isInline(): false {
     return false;
   }
+
+  override decorate(): JSX.Element {
+    return null as any;
+  }
 }
 
 export function $createCustomComponentNode(data: CustomComponentData): CustomComponentNode {
