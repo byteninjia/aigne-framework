@@ -7,7 +7,6 @@
   "packages/cli": "1.44.0",
   "packages/test-utils": "0.5.44",
   "packages/transport": "0.15.0",
-  "packages/publish-docs": "0.8.0",
   "models/anthropic": "0.12.0",
   "models/bedrock": "0.9.18",
   "models/deepseek": "0.7.37",
