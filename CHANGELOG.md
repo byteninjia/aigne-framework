@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.78.2](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.78.1...aigne-framework-v1.78.2) (2025-09-18)
+
+
+### Bug Fixes
+
+* correct flat import, remove default import error ([#519](https://github.com/AIGNE-io/aigne-framework/issues/519)) ([6e8fd30](https://github.com/AIGNE-io/aigne-framework/commit/6e8fd30b89be1300ab6214f13fd273e51e25329b))
+* correct flat import, remove default import error ([#519](https://github.com/AIGNE-io/aigne-framework/issues/519)) ([6e8fd30](https://github.com/AIGNE-io/aigne-framework/commit/6e8fd30b89be1300ab6214f13fd273e51e25329b))
+* **gemini:** should include at least one user message ([#521](https://github.com/AIGNE-io/aigne-framework/issues/521)) ([eb2752e](https://github.com/AIGNE-io/aigne-framework/commit/eb2752ed7d78f59c435ecc3ccb7227e804e3781e))
+
+## [1.78.1](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.78.0...aigne-framework-v1.78.1) (2025-09-18)
+
+
+### Bug Fixes
+
+* **models:** convert local image to base64 for image model ([#517](https://github.com/AIGNE-io/aigne-framework/issues/517)) ([c0bc971](https://github.com/AIGNE-io/aigne-framework/commit/c0bc971087ef6e1caa641a699aed391a24feb40d))
+* **models:** convert local image to base64 for image model ([#517](https://github.com/AIGNE-io/aigne-framework/issues/517)) ([c0bc971](https://github.com/AIGNE-io/aigne-framework/commit/c0bc971087ef6e1caa641a699aed391a24feb40d))
+* support the correct 3.0 model ([#514](https://github.com/AIGNE-io/aigne-framework/issues/514)) ([98e0d44](https://github.com/AIGNE-io/aigne-framework/commit/98e0d44ce2c4c7b043d5fc934c6e312ffa821521))
+* use aigne hub model when aigne hub connected ([#516](https://github.com/AIGNE-io/aigne-framework/issues/516)) ([a0493d0](https://github.com/AIGNE-io/aigne-framework/commit/a0493d0ad453afd3c3734ee2730636c6bd1e08ce))
+
 ## [1.78.0](https://github.com/AIGNE-io/aigne-framework/compare/aigne-framework-v1.77.1...aigne-framework-v1.78.0) (2025-09-16)
 
 
