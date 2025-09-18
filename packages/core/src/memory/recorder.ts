@@ -111,7 +111,7 @@ export class MemoryRecorder extends Agent<MemoryRecorderInput, MemoryRecorderOut
     options: AgentInvokeOptions,
   ): PromiseOrValue<AgentProcessResult<MemoryRecorderOutput>> {
     if (!this._process) {
-      throw new Error("MemoryRecorder process function is not defined.");
+      throw new Error("MemoryRecorder process function is not implemented.");
     }
     return this._process(input, options);
   }

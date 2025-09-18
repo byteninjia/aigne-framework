@@ -342,7 +342,7 @@ What is the weather in New York?
             properties: {
               city: {
                 type: "string",
-                description: "The location to get wether",
+                description: "The location to get weather",
               },
             },
             required: ["city"],

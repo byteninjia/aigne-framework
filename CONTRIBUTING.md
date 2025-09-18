@@ -39,7 +39,7 @@ pnpm test:coverage
 
 ## Running Examples
 
-Examples are located in the `examples/` directory. To run an example, navigate to each example directory and checkout its README for instructions.
+Examples are located in the `examples/` directory. To run an example, navigate to each example directory and check out its README for instructions.
 
 ## Lint, Typecheck, Format
 

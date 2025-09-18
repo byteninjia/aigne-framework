@@ -14,17 +14,17 @@
 
 ## What is AIGNE Framework
 
-AIGNE Framework \[ ˈei dʒən ] is a functional AI application development framework designed to simplify and accelerate the process of building modern applications. It combines functional programming features, powerful artificial intelligence capabilities, and modular design principles to help developers easily create scalable solutions. AIGNE Framework is also deeply integrated with the Blocklet ecosystem, providing developers with a wealth of tools and resources.
+AIGNE Framework \[ ˈei dʒən ] is a functional AI application development framework designed to simplify and accelerate the process of building modern applications. It combines functional programming features, powerful artificial intelligence capabilities, and modular design principles to help developers create scalable solutions. AIGNE Framework is also deeply integrated with the Blocklet ecosystem, providing developers with a wealth of tools and resources.
 
 ## Key Features
 
-* **Modular Design**: With a clear modular structure, developers can easily organize code, improve development efficiency, and simplify maintenance.
+* **Modular Design**: With a clear modular structure, developers can easily organize code, improve development efficiency and simplify maintenance.
 * **TypeScript Support**: Comprehensive TypeScript type definitions are provided, ensuring type safety and enhancing the developer experience.
-* **Multiple AI Model Support**: Built-in support for OpenAI, Gemini, Claude, Nova and other mainstream AI models, easily extensible to support additional models.
-* **Flexible Workflow Patterns**: Support for sequential, concurrent, routing, handoff and other workflow patterns to meet various complex application requirements.
+* **Multiple AI Model Support**: Built-in support for OpenAI, Gemini, Claude, Nova, and other mainstream AI models, easily extensible to support additional models.
+* **Flexible Workflow Patterns**: Support for sequential, concurrent, routing, handoff, and other workflow patterns to meet various complex application requirements.
 * **MCP Protocol Integration**: Seamless integration with external systems and services through the Model Context Protocol.
 * **Code Execution Capabilities**: Support for executing dynamically generated code in a secure sandbox, enabling more powerful automation capabilities.
-* **Blocklet Ecosystem Integration**: Closely integrated with ArcBlock's Blocklet ecosystem, providing developers with a one-stop solution for development and deployment.
+* **Blocklet Ecosystem Integration**: Tightly integrated with ArcBlock's Blocklet ecosystem, providing developers with a one-stop solution for development and deployment.
 
 ## Quick Start
 
